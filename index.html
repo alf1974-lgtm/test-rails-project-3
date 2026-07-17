@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <h1>Tic Tac Toe</h1>
+
+  <!-- Score board -->
+  <div id="scoreboard">
+    <div class="score-card x-card" id="card-x">
+      <div class="player-label">Player 1</div>
+      <div class="player-symbol">X</div>
+      <div class="player-score" id="score-x">0</div>
+    </div>
+    <div class="score-card o-card" id="card-o">
+      <div class="player-label">Player 2</div>
+      <div class="player-symbol">O</div>
+      <div class="player-score" id="score-o">0</div>
+    </div>
+  </div>
+
+  <!-- Turn indicator -->
+  <div id="status"></div>
+
+  <!-- Game board -->
+  <div id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="btn-row">
+    <button id="btn-restart">New Game</button>
+    <button id="btn-reset-scores">Reset Scores</button>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
