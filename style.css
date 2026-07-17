@@ -1,0 +1,205 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Layout container ─────────────────────────────────────── */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 24px;
+}
+
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #e0e0e0;
+  text-shadow: 0 0 18px rgba(100, 180, 255, 0.4);
+}
+
+/* ── Status banner ────────────────────────────────────────── */
+.status-banner {
+  font-size: 1.2rem;
+  padding: 10px 28px;
+  border-radius: 30px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  min-width: 240px;
+  text-align: center;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.status-banner.turn-x  { border-color: #4fc3f7; background: #0d2137; }
+.status-banner.turn-o  { border-color: #ef9a9a; background: #2a0d0d; }
+.status-banner.winner  { border-color: #a5d6a7; background: #0d2a0d; font-weight: 700; }
+.status-banner.draw    { border-color: #ffe082; background: #2a2200; }
+
+/* ── Board ────────────────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 110px);
+  grid-template-rows:    repeat(3, 110px);
+  gap: 10px;
+}
+
+.cell {
+  width: 110px;
+  height: 110px;
+  background: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 12px;
+  font-size: 3rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: transparent;          /* revealed on fill */
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cell:hover:not([disabled]) {
+  background: #1e2f55;
+  transform: scale(1.04);
+  box-shadow: 0 0 14px rgba(79, 195, 247, 0.25);
+}
+
+.cell:active:not([disabled]) {
+  transform: scale(0.96);
+}
+
+/* X styling */
+.cell.x {
+  color: #4fc3f7;
+  border-color: #4fc3f7;
+  text-shadow: 0 0 12px rgba(79, 195, 247, 0.7);
+  cursor: default;
+}
+
+/* O styling */
+.cell.o {
+  color: #ef9a9a;
+  border-color: #ef9a9a;
+  text-shadow: 0 0 12px rgba(239, 154, 154, 0.7);
+  cursor: default;
+}
+
+/* Winning cells highlight */
+.cell.winning {
+  background: #0f3460;
+  animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+.cell.x.winning { background: #0d2137; box-shadow: 0 0 20px rgba(79, 195, 247, 0.6); }
+.cell.o.winning { background: #2a0d0d; box-shadow: 0 0 20px rgba(239, 154, 154, 0.6); }
+
+@keyframes pulse {
+  from { transform: scale(1);    }
+  to   { transform: scale(1.06); }
+}
+
+/* Pop-in animation for placed marks */
+@keyframes pop-in {
+  0%   { transform: scale(0.3); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.cell.x, .cell.o {
+  animation: pop-in 0.22s ease-out forwards;
+}
+
+/* ── Restart button ───────────────────────────────────────── */
+.restart-btn {
+  padding: 12px 36px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: transparent;
+  color: #90caf9;
+  border: 2px solid #90caf9;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+.restart-btn:hover {
+  background: #90caf9;
+  color: #1a1a2e;
+  transform: scale(1.04);
+}
+
+.restart-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Scoreboard ───────────────────────────────────────────── */
+.scoreboard {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 14px 28px;
+  min-width: 90px;
+  transition: border-color 0.3s;
+}
+
+.score-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #aaa;
+}
+
+.score-label.player-x { color: #4fc3f7; }
+.score-label.player-o { color: #ef9a9a; }
+
+.score-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.score-sub {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* Active player score card glow */
+.score-card.active-x { border-color: #4fc3f7; box-shadow: 0 0 10px rgba(79,195,247,0.2); }
+.score-card.active-o { border-color: #ef9a9a; box-shadow: 0 0 10px rgba(239,154,154,0.2); }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 420px) {
+  .board {
+    grid-template-columns: repeat(3, 88px);
+    grid-template-rows:    repeat(3, 88px);
+    gap: 8px;
+  }
+  .cell { width: 88px; height: 88px; font-size: 2.4rem; }
+  h1 { font-size: 1.8rem; }
+}
