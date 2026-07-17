@@ -1,0 +1,61 @@
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.1
+  Exclude:
+    - 'db/schema.rb'
+    - 'bin/**/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'db/seeds.rb'
+
+Metrics/MethodLength:
+  Max: 20
+
+Metrics/AbcSize:
+  Max: 25
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'db/seeds.rb'
+
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# It is idiomatic to check both validity and the specific error field in one example.
+# Request specs verify full JSON payloads and legitimately have many expectations.
+RSpec/MultipleExpectations:
+  Max: 3
+  Exclude:
+    - 'spec/requests/**/*'
+
+RSpec/ExampleLength:
+  Max: 15
+  Exclude:
+    - 'spec/requests/**/*'
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
+
+RSpec/ContextWording:
+  Prefixes:
+    - when
+    - with
+    - without
+    - and
+    - given
+    - uniqueness
