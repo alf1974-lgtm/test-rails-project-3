@@ -1,0 +1,207 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Layout container ─────────────────────────────────────── */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  width: min(480px, 95vw);
+}
+
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #e2e8f0;
+  text-shadow: 0 0 20px rgba(99, 179, 237, 0.6);
+}
+
+/* ── Status banner ────────────────────────────────────────── */
+.status-banner {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 10px 28px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.3s;
+}
+
+.status-banner.x-turn  { border-color: #63b3ed; background: rgba(99, 179, 237, 0.15); }
+.status-banner.o-turn  { border-color: #fc8181; background: rgba(252, 129, 129, 0.15); }
+.status-banner.winner  { border-color: #68d391; background: rgba(104, 211, 145, 0.2); }
+.status-banner.draw    { border-color: #f6e05e; background: rgba(246, 224, 94, 0.15); }
+
+#current-player {
+  font-size: 1.3rem;
+}
+
+/* ── Board ────────────────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.cell {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 900;
+  cursor: pointer;
+  color: transparent;          /* revealed by JS class */
+  transition: background 0.2s, transform 0.1s, border-color 0.2s;
+  line-height: 1;
+}
+
+.cell:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(1.04);
+}
+
+.cell:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.cell:disabled {
+  cursor: default;
+}
+
+/* X  — blue */
+.cell.x {
+  color: #63b3ed;
+  border-color: #63b3ed;
+  text-shadow: 0 0 12px rgba(99, 179, 237, 0.7);
+}
+
+/* O  — red/pink */
+.cell.o {
+  color: #fc8181;
+  border-color: #fc8181;
+  text-shadow: 0 0 12px rgba(252, 129, 129, 0.7);
+}
+
+/* Winning cells pulse */
+.cell.winning {
+  animation: pulse 0.6s ease-in-out infinite alternate;
+  background: rgba(104, 211, 145, 0.15);
+  border-color: #68d391 !important;
+}
+
+@keyframes pulse {
+  from { transform: scale(1);    box-shadow: 0 0  8px rgba(104, 211, 145, 0.4); }
+  to   { transform: scale(1.06); box-shadow: 0 0 20px rgba(104, 211, 145, 0.8); }
+}
+
+/* Pop-in animation when a mark is placed */
+@keyframes pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.cell.pop {
+  animation: pop 0.25s ease-out forwards;
+}
+
+/* ── Result message ───────────────────────────────────────── */
+.result-message {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #68d391;
+  text-align: center;
+}
+
+.result-message.hidden { display: none; }
+
+/* ── Scoreboard ───────────────────────────────────────────── */
+.scoreboard {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.score-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.score-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+.score-value {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.score-sub {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.x-color { color: #63b3ed; }
+.o-color { color: #fc8181; }
+
+/* ── Restart button ───────────────────────────────────────── */
+.restart-btn {
+  padding: 12px 40px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #1a1a2e;
+  background: linear-gradient(135deg, #63b3ed, #68d391);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 20px rgba(99, 179, 237, 0.4);
+}
+
+.restart-btn:hover  { opacity: 0.88; transform: translateY(-2px); }
+.restart-btn:active { transform: translateY(0); }
+
+/* ── Responsive tweaks ────────────────────────────────────── */
+@media (max-width: 360px) {
+  h1 { font-size: 1.8rem; }
+  .status-banner { font-size: 1rem; }
+}
