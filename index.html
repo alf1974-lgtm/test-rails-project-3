@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KenKen Puzzle</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>KenKen</h1>
+      <p class="subtitle">Fill the grid so every row and column contains the digits 1–<span id="size-label">6</span> exactly once, and each cage satisfies its clue.</p>
+    </header>
+
+    <div id="controls">
+      <div id="timer-box">
+        <span id="timer">00:00</span>
+      </div>
+      <div id="btn-group">
+        <button id="btn-check">Check</button>
+        <button id="btn-solve">Reveal Solution</button>
+        <button id="btn-new">New Puzzle</button>
+      </div>
+      <div id="difficulty-box">
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty">
+          <option value="4">4×4 (Easy)</option>
+          <option value="6" selected>6×6 (Medium)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="message-box" class="hidden"></div>
+
+    <div id="grid-wrapper">
+      <div id="grid"></div>
+    </div>
+
+    <div id="numpad"></div>
+
+    <footer>
+      <p>Click a cell, then press a number key or use the pad below. Press <kbd>Delete</kbd> / <kbd>Backspace</kbd> to clear.</p>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
