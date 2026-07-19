@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../config/environment"
+require "rails/command"
+
+require "rack"
+server = Rack::Server.new(config: "config/puma.rb")
+server.start
