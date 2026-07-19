@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+    <h1>Tic Tac Toe</h1>
+
+    <div id="status-bar">
+      <span id="player-indicator" class="player-x">Player 1's turn (X)</span>
+    </div>
+
+    <div id="board" aria-label="Tic Tac Toe board">
+      <button class="cell" data-index="0" aria-label="Cell 1"></button>
+      <button class="cell" data-index="1" aria-label="Cell 2"></button>
+      <button class="cell" data-index="2" aria-label="Cell 3"></button>
+      <button class="cell" data-index="3" aria-label="Cell 4"></button>
+      <button class="cell" data-index="4" aria-label="Cell 5"></button>
+      <button class="cell" data-index="5" aria-label="Cell 6"></button>
+      <button class="cell" data-index="6" aria-label="Cell 7"></button>
+      <button class="cell" data-index="7" aria-label="Cell 8"></button>
+      <button class="cell" data-index="8" aria-label="Cell 9"></button>
+    </div>
+
+    <!-- Overlay shown on win / draw -->
+    <div id="overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="overlay-message">
+      <div id="overlay-box">
+        <p id="overlay-message"></p>
+        <button id="restart-btn">Play Again</button>
+      </div>
+    </div>
+
+    <div id="scoreboard">
+      <div class="score-item player-x-score">
+        <span class="score-label">Player 1 (X)</span>
+        <span class="score-value" id="score-x">0</span>
+      </div>
+      <div class="score-item draw-score">
+        <span class="score-label">Draws</span>
+        <span class="score-value" id="score-draw">0</span>
+      </div>
+      <div class="score-item player-o-score">
+        <span class="score-label">Player 2 (O)</span>
+        <span class="score-value" id="score-o">0</span>
+      </div>
+    </div>
+
+    <button id="reset-scores-btn">Reset Scores</button>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
