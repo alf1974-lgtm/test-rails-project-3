@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <h1>Tic Tac Toe</h1>
+
+  <!-- Score board -->
+  <div id="scoreboard">
+    <div id="card-x" class="score-card x-card active-player">
+      <div class="player-label">Player 1</div>
+      <div class="player-symbol">X</div>
+      <div class="player-score" id="score-x">0</div>
+    </div>
+    <div id="card-o" class="score-card o-card">
+      <div class="player-label">Player 2</div>
+      <div class="player-symbol">O</div>
+      <div class="player-score" id="score-o">0</div>
+    </div>
+  </div>
+
+  <!-- Turn indicator -->
+  <p id="status"></p>
+
+  <!-- Game board: 9 cells in a 3×3 grid -->
+  <div id="board" role="grid" aria-label="Tic Tac Toe board">
+    <div class="cell" role="gridcell" aria-label="Row 1, Column 1"></div>
+    <div class="cell" role="gridcell" aria-label="Row 1, Column 2"></div>
+    <div class="cell" role="gridcell" aria-label="Row 1, Column 3"></div>
+    <div class="cell" role="gridcell" aria-label="Row 2, Column 1"></div>
+    <div class="cell" role="gridcell" aria-label="Row 2, Column 2"></div>
+    <div class="cell" role="gridcell" aria-label="Row 2, Column 3"></div>
+    <div class="cell" role="gridcell" aria-label="Row 3, Column 1"></div>
+    <div class="cell" role="gridcell" aria-label="Row 3, Column 2"></div>
+    <div class="cell" role="gridcell" aria-label="Row 3, Column 3"></div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <button id="btn-restart">New Round</button>
+    <button id="btn-reset-scores">Reset Scores</button>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

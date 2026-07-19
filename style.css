@@ -1,0 +1,154 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Title ────────────────────────────────────────────────── */
+h1 {
+  font-size: 2.6rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+  background: linear-gradient(135deg, #e94560, #0f3460);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Score board ──────────────────────────────────────────── */
+#scoreboard {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 1.4rem;
+}
+
+.score-card {
+  text-align: center;
+  background: #16213e;
+  border-radius: 12px;
+  padding: 0.6rem 1.6rem;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.score-card.active-player {
+  border-color: #e94560;
+  box-shadow: 0 0 12px #e9456066;
+}
+
+.score-card .player-label {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #aaa;
+}
+
+.score-card .player-symbol {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.score-card.x-card .player-symbol { color: #e94560; }
+.score-card.o-card .player-symbol { color: #0f9b8e; }
+
+.score-card .player-score {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+/* ── Status message ───────────────────────────────────────── */
+#status {
+  font-size: 1.15rem;
+  margin-bottom: 1.2rem;
+  min-height: 1.6rem;
+  letter-spacing: 1px;
+  transition: color 0.3s;
+}
+
+#status.winner-x { color: #e94560; }
+#status.winner-o { color: #0f9b8e; }
+#status.draw      { color: #f5a623; }
+
+/* ── Board ────────────────────────────────────────────────── */
+#board {
+  display: grid;
+  grid-template-columns: repeat(3, 110px);
+  grid-template-rows:    repeat(3, 110px);
+  gap: 10px;
+}
+
+.cell {
+  background: #16213e;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, transform 0.1s;
+  border: 2px solid #0f3460;
+}
+
+.cell:hover:not(.taken) {
+  background: #0f3460;
+  transform: scale(1.05);
+}
+
+.cell.taken { cursor: default; }
+
+.cell.x { color: #e94560; }
+.cell.o { color: #0f9b8e; }
+
+/* winning cells pulse */
+.cell.winning {
+  animation: pulse 0.6s ease-in-out infinite alternate;
+  border-color: #f5a623;
+}
+
+@keyframes pulse {
+  from { background: #16213e; }
+  to   { background: #2a2a0e; box-shadow: 0 0 18px #f5a62388; }
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+#controls {
+  margin-top: 1.6rem;
+  display: flex;
+  gap: 1rem;
+}
+
+button {
+  padding: 0.55rem 1.6rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+button:hover  { opacity: 0.85; transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+
+#btn-restart {
+  background: #e94560;
+  color: #fff;
+}
+
+#btn-reset-scores {
+  background: #0f3460;
+  color: #eee;
+  border: 1px solid #e94560;
+}
