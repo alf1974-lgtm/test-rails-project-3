@@ -1,0 +1,168 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Title ────────────────────────────────────────────────── */
+h1 {
+  font-size: 2.6rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+  background: linear-gradient(135deg, #e94560, #0f3460);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Status banner ────────────────────────────────────────── */
+#status {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.6rem;
+  min-height: 2rem;
+  transition: color 0.3s;
+}
+
+#status.x-turn  { color: #e94560; }
+#status.o-turn  { color: #4fc3f7; }
+#status.winner  { color: #ffd700; font-size: 1.5rem; }
+#status.draw    { color: #aaa;    font-size: 1.5rem; }
+
+/* ── Score board ──────────────────────────────────────────── */
+#scoreboard {
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 1.8rem;
+}
+
+.score-box {
+  text-align: center;
+  background: #16213e;
+  border-radius: 12px;
+  padding: 0.6rem 1.4rem;
+  min-width: 90px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.score-box .label {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.score-box .value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.score-box.x-box .value { color: #e94560; }
+.score-box.o-box .value { color: #4fc3f7; }
+.score-box.draw-box .value { color: #aaa; }
+
+/* ── Board ────────────────────────────────────────────────── */
+#board {
+  display: grid;
+  grid-template-columns: repeat(3, 110px);
+  grid-template-rows:    repeat(3, 110px);
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.cell {
+  background: #16213e;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.cell:hover:not(.taken) {
+  background: #0f3460;
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+
+.cell.taken { cursor: default; }
+
+.cell.x { color: #e94560; }
+.cell.o { color: #4fc3f7; }
+
+/* pop-in animation when a mark is placed */
+@keyframes pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.cell.x span,
+.cell.o span {
+  display: inline-block;
+  animation: pop 0.22s ease-out forwards;
+}
+
+/* winning cells highlight */
+.cell.win {
+  background: #0f3460;
+  box-shadow: 0 0 18px 4px rgba(255, 215, 0, 0.55);
+}
+.cell.win.x { color: #ffd700; }
+.cell.win.o { color: #ffd700; }
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 1rem;
+}
+
+button {
+  padding: 0.65rem 1.8rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+button:active { transform: scale(0.96); }
+
+#btn-restart {
+  background: #e94560;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(233,69,96,0.45);
+}
+#btn-restart:hover { box-shadow: 0 6px 18px rgba(233,69,96,0.65); }
+
+#btn-reset-scores {
+  background: #0f3460;
+  color: #ccc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+#btn-reset-scores:hover { color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+
+/* ── Footer ───────────────────────────────────────────────── */
+footer {
+  margin-top: 2.2rem;
+  font-size: 0.78rem;
+  opacity: 0.4;
+  letter-spacing: 1px;
+}
