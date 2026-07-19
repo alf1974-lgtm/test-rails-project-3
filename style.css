@@ -1,0 +1,297 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Layout container ─────────────────────────────────────── */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 24px;
+  position: relative;
+}
+
+h1 {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #e94560, #0f3460, #e94560);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+
+/* ── Scoreboard ───────────────────────────────────────────── */
+.scoreboard {
+  display: flex;
+  gap: 16px;
+}
+
+.score-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 14px 28px;
+  text-align: center;
+  min-width: 110px;
+  transition: background 0.3s;
+}
+
+.score-card.active-player {
+  background: rgba(233, 69, 96, 0.25);
+  border-color: #e94560;
+  box-shadow: 0 0 14px rgba(233, 69, 96, 0.4);
+}
+
+.score-card.draws {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.score-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+.score-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── Status bar ───────────────────────────────────────────── */
+.status-bar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.player-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  font-weight: 900;
+  background: #e94560;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(233, 69, 96, 0.6);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.marker.o {
+  background: #0f9b8e;
+  box-shadow: 0 0 12px rgba(15, 155, 142, 0.6);
+}
+
+/* ── Board ────────────────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 110px);
+  grid-template-rows: repeat(3, 110px);
+  gap: 10px;
+  position: relative;
+}
+
+.cell {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 900;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, transform 0.1s, border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cell:hover:not(.taken) {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.04);
+}
+
+.cell.taken {
+  cursor: default;
+}
+
+/* X and O colours */
+.cell.x {
+  color: #e94560;
+  text-shadow: 0 0 16px rgba(233, 69, 96, 0.7);
+}
+
+.cell.o {
+  color: #0f9b8e;
+  text-shadow: 0 0 16px rgba(15, 155, 142, 0.7);
+}
+
+/* Pop-in animation when a cell is claimed */
+@keyframes pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.cell.pop {
+  animation: pop 0.25s ease-out forwards;
+}
+
+/* Winning cells glow */
+.cell.winner {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: gold;
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
+  animation: pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+  to   { box-shadow: 0 0 28px rgba(255, 215, 0, 0.9); }
+}
+
+/* ── End-of-round overlay ─────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 30, 0.75);
+  border-radius: 18px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  transition: opacity 0.3s;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.overlay-box {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeUp 0.35s ease-out;
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.overlay-icon {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+.overlay-message {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #e94560, #c0392b);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(233, 69, 96, 0.45);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(233, 69, 96, 0.6);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-reset {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  font-size: 0.85rem;
+  padding: 9px 22px;
+  letter-spacing: 1px;
+  color: #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-reset:hover {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: none;
+  color: #fff;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 420px) {
+  .board {
+    grid-template-columns: repeat(3, 90px);
+    grid-template-rows: repeat(3, 90px);
+    gap: 8px;
+  }
+
+  .cell {
+    font-size: 2.4rem;
+    border-radius: 10px;
+  }
+
+  h1 {
+    font-size: 1.9rem;
+  }
+
+  .score-card {
+    padding: 10px 16px;
+    min-width: 85px;
+  }
+}
