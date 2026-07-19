@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KenKen Puzzle</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+    <header>
+      <h1>KenKen</h1>
+      <p class="subtitle">Fill every row and column with the digits 1–<span id="size-label">6</span>, each used exactly once.<br>
+         Numbers in each bold cage must combine to the target using the given operation.</p>
+    </header>
+
+    <div id="controls">
+      <label for="size-select">Grid size:</label>
+      <select id="size-select">
+        <option value="4">4 × 4</option>
+        <option value="5">5 × 5</option>
+        <option value="6" selected>6 × 6</option>
+        <option value="7">7 × 7</option>
+        <option value="8">8 × 8</option>
+      </select>
+
+      <label for="difficulty-select">Difficulty:</label>
+      <select id="difficulty-select">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+
+      <button id="new-game-btn">New Game</button>
+      <button id="check-btn">Check</button>
+      <button id="solve-btn">Solve</button>
+      <button id="clear-btn">Clear</button>
+    </div>
+
+    <div id="message-bar" class="hidden"></div>
+
+    <div id="board-wrapper">
+      <div id="board"></div>
+    </div>
+
+    <div id="numpad"></div>
+
+    <div id="instructions">
+      <h2>How to play</h2>
+      <ul>
+        <li>Click a cell to select it, then type a digit or click the number pad.</li>
+        <li>Each row and column must contain every digit from 1 to <span class="size-ref">6</span> exactly once.</li>
+        <li>Cells grouped by a bold border form a <em>cage</em>. The small number and symbol in the top-left corner of each cage show the target value and operation.</li>
+        <li><strong>+</strong> the digits must sum to the target.</li>
+        <li><strong>−</strong> the two digits must differ by the target.</li>
+        <li><strong>×</strong> the digits must multiply to the target.</li>
+        <li><strong>÷</strong> the two digits must divide to the target.</li>
+        <li>A cage with no operator is a single cell whose value equals the target.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

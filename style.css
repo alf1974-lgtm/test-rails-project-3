@@ -1,0 +1,253 @@
+/* ── Reset & base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f0f4f8;
+  --surface:     #ffffff;
+  --primary:     #4361ee;
+  --primary-dk:  #3a56d4;
+  --success:     #2dc653;
+  --danger:      #e63946;
+  --warn:        #f4a261;
+  --text:        #1d2d44;
+  --muted:       #6c757d;
+  --border:      #ced4da;
+  --cage-border: #1d2d44;
+  --cell-sel:    #cce0ff;
+  --cell-peer:   #e8f0fe;
+  --cell-err:    #ffd6d6;
+  --cell-solved: #d4f7dc;
+  --radius:      8px;
+  --shadow:      0 4px 20px rgba(0,0,0,.10);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+}
+
+/* ── App shell ────────────────────────────────────────────────── */
+#app {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+header { text-align: center; }
+
+header h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  color: var(--primary);
+}
+
+.subtitle {
+  margin-top: .35rem;
+  font-size: .9rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Controls ─────────────────────────────────────────────────── */
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  background: var(--surface);
+  padding: .75rem 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+}
+
+#controls label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+#controls select {
+  padding: .35rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: .9rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+#controls button {
+  padding: .4rem .9rem;
+  border: none;
+  border-radius: 6px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+
+#new-game-btn { background: var(--primary);  color: #fff; }
+#new-game-btn:hover { background: var(--primary-dk); }
+
+#check-btn  { background: var(--success); color: #fff; }
+#check-btn:hover  { background: #25b048; }
+
+#solve-btn  { background: var(--warn);    color: #fff; }
+#solve-btn:hover  { background: #e08c4a; }
+
+#clear-btn  { background: var(--border);  color: var(--text); }
+#clear-btn:hover  { background: #b8bfc7; }
+
+#controls button:active { transform: scale(.96); }
+
+/* ── Message bar ──────────────────────────────────────────────── */
+#message-bar {
+  width: 100%;
+  padding: .65rem 1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-align: center;
+  font-size: .95rem;
+  transition: opacity .3s;
+}
+#message-bar.hidden   { display: none; }
+#message-bar.success  { background: #d4f7dc; color: #1a7a35; }
+#message-bar.error    { background: #ffd6d6; color: #9b1c1c; }
+#message-bar.info     { background: #dbeafe; color: #1e40af; }
+
+/* ── Board wrapper ────────────────────────────────────────────── */
+#board-wrapper {
+  background: var(--surface);
+  padding: 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* ── Grid ─────────────────────────────────────────────────────── */
+#board {
+  display: grid;
+  /* columns set dynamically via JS */
+  gap: 0;
+  border: 3px solid var(--cage-border);
+  border-radius: 4px;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Individual cell ──────────────────────────────────────────── */
+.cell {
+  position: relative;
+  width:  56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: background .12s;
+  outline: none;
+}
+
+/* Cage borders — applied via JS data attributes */
+.cell[data-border-top]    { border-top:    2.5px solid var(--cage-border); }
+.cell[data-border-right]  { border-right:  2.5px solid var(--cage-border); }
+.cell[data-border-bottom] { border-bottom: 2.5px solid var(--cage-border); }
+.cell[data-border-left]   { border-left:   2.5px solid var(--cage-border); }
+
+/* States */
+.cell.selected  { background: var(--cell-sel) !important; }
+.cell.peer      { background: var(--cell-peer); }
+.cell.error     { background: var(--cell-err) !important; color: var(--danger); }
+.cell.solved    { background: var(--cell-solved); }
+.cell.given     { color: var(--primary); cursor: default; }
+
+.cell:hover:not(.given) { background: #f0f6ff; }
+
+/* Cage label */
+.cage-label {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: .58rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* User digit */
+.cell-value {
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* ── Number pad ───────────────────────────────────────────────── */
+#numpad {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .5rem;
+}
+
+.numpad-btn {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, transform .1s;
+  color: var(--text);
+}
+
+.numpad-btn:hover  { background: var(--cell-peer); border-color: var(--primary); }
+.numpad-btn:active { transform: scale(.93); }
+
+.numpad-btn.erase {
+  font-size: .85rem;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.numpad-btn.erase:hover { background: #ffd6d6; }
+
+/* ── Instructions ─────────────────────────────────────────────── */
+#instructions {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+  width: 100%;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+#instructions h2 {
+  font-size: 1rem;
+  margin-bottom: .5rem;
+  color: var(--primary);
+}
+
+#instructions ul { padding-left: 1.2rem; }
+#instructions li { margin-bottom: .25rem; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .cell { width: 44px; height: 44px; font-size: 1.1rem; }
+  .cage-label { font-size: .5rem; }
+  header h1 { font-size: 2rem; }
+}
