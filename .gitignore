@@ -1,0 +1,17 @@
+# Ignore SQLite databases
+school_api/storage/*.sqlite3
+school_api/storage/*.sqlite3-shm
+school_api/storage/*.sqlite3-wal
+
+# Ignore log files
+school_api/log/*.log
+
+# Ignore tmp
+school_api/tmp/
+
+# Ignore bundler binstubs that aren't needed
+school_api/.bundle/
+
+# Ignore credentials
+school_api/config/credentials.yml.enc
+school_api/config/master.key
