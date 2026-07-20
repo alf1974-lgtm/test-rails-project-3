@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tetroggleable</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #1a1a2e; color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px; gap: 20px; }
+h1 { text-align: center; font-size: 1.8em; color: #e94560; margin-bottom: 10px; letter-spacing: 2px; }
+#left-panel { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+#right-panel { display: flex; flex-direction: column; gap: 10px; min-width: 180px; }
+canvas#board { border: 2px solid #e94560; background: #0f0f23; display: block; }
+canvas#next-canvas { border: 2px solid #444; background: #0f0f23; }
+.panel-box { background: #16213e; border: 1px solid #444; border-radius: 6px; padding: 10px; }
+.panel-box h3 { color: #e94560; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.panel-box p { font-size: 1.4em; font-weight: bold; color: #fff; }
+#word-input-area { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+#word-display { font-size: 1.6em; letter-spacing: 4px; color: #f0e68c; min-height: 2em; text-align: center; background: #0f0f23; border: 1px solid #444; border-radius: 4px; padding: 6px 12px; width: 100%; }
+#word-feedback { font-size: 0.9em; min-height: 1.4em; text-align: center; color: #aaa; }
+#word-feedback.good { color: #4caf50; }
+#word-feedback.bad { color: #e94560; }
+#controls-info { font-size: 0.75em; color: #888; line-height: 1.7; }
+#controls-info span { color: #ccc; }
+.legend { display: flex; flex-direction: column; gap: 4px; font-size: 0.75em; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
+#overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.82); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+#overlay h2 { font-size: 2.5em; color: #e94560; margin-bottom: 10px; }
+#overlay p { color: #ccc; margin-bottom: 20px; font-size: 1.1em; text-align: center; max-width: 360px; }
+#overlay button { background: #e94560; color: #fff; border: none; padding: 12px 32px; font-size: 1.1em; border-radius: 6px; cursor: pointer; }
+#overlay button:hover { background: #c73652; }
+</style>
+</head>
+<body>
+<div id="left-panel">
+  <h1>Tetroggleable</h1>
+  <canvas id="board" width="300" height="600"></canvas>
+  <div id="word-input-area">
+    <div id="word-display"></div>
+    <div id="word-feedback">Type letters to spell a word from the board, then press Enter</div>
+  </div>
+</div>
+<div id="right-panel">
+  <div class="panel-box">
+    <h3>Score</h3>
+    <p id="score-display">0</p>
+  </div>
+  <div class="panel-box">
+    <h3>Level</h3>
+    <p id="level-display">1</p>
+  </div>
+  <div class="panel-box">
+    <h3>Lines</h3>
+    <p id="lines-display">0</p>
+  </div>
+  <div class="panel-box">
+    <h3>Next</h3>
+    <canvas id="next-canvas" width="120" height="120"></canvas>
+  </div>
+  <div class="panel-box">
+    <h3>Controls</h3>
+    <div id="controls-info">
+      <span>← →</span> Move<br>
+      <span>↑</span> Rotate<br>
+      <span>↓</span> Soft drop<br>
+      <span>Space</span> Hard drop<br>
+      <span>A-Z</span> Type word<br>
+      <span>Enter</span> Submit word<br>
+      <span>Backspace</span> Delete letter<br>
+      <span>Esc</span> Clear word
+    </div>
+  </div>
+  <div class="panel-box">
+    <h3>Bonus Tiles</h3>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#ffb3c6"></div> Double Word</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#ff4d79"></div> Triple Word</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#b3d9ff"></div> Double Letter</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#1a8cff"></div> Triple Letter</div>
+    </div>
+  </div>
+</div>
+<div id="overlay">
+  <h2 id="overlay-title">Tetroggleable</h2>
+  <p id="overlay-msg">Tetris + Boggle + Scrabble!<br>Clear rows for 10 pts each. Spell words from settled blocks for Scrabble points. Bonus tiles multiply your score!</p>
+  <button id="overlay-btn">Play</button>
+</div>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const COLS = 10, ROWS = 20, CELL = 30;
+const TICK_BASE = 800; // ms per drop at level 1
+
+// Scrabble letter values
+const LETTER_VALUES = {
+  A:1,E:1,I:1,O:1,U:1,L:1,N:1,S:1,T:1,R:1,
+  D:2,G:2,
+  B:3,C:3,M:3,P:3,
+  F:4,H:4,V:4,W:4,Y:4,
+  K:5,
+  J:8,X:8,
+  Q:10,Z:10
+};
+
+// Scrabble letter frequency distribution for random assignment
+const LETTER_POOL = (()=>{
+  const freq = {A:9,B:2,C:2,D:4,E:12,F:2,G:3,H:2,I:9,J:1,K:1,L:4,M:2,
+                N:6,O:8,P:2,Q:1,R:6,S:4,T:6,U:4,V:2,W:2,X:1,Y:2,Z:1};
+  const pool = [];
+  for(const [l,n] of Object.entries(freq)) for(let i=0;i<n;i++) pool.push(l);
+  return pool;
+})();
+
+function randomLetter() {
+  return LETTER_POOL[Math.floor(Math.random()*LETTER_POOL.length)];
+}
+
+// Bonus tile types
+const BONUS = { NONE:0, DL:1, TL:2, DW:3, TW:4 };
+const BONUS_COLORS = {
+  [BONUS.NONE]: null,
+  [BONUS.DL]:   '#b3d9ff',
+  [BONUS.TL]:   '#1a8cff',
+  [BONUS.DW]:   '#ffb3c6',
+  [BONUS.TW]:   '#ff4d79',
+};
+const BONUS_LABEL = {
+  [BONUS.DL]:'2L', [BONUS.TL]:'3L', [BONUS.DW]:'2W', [BONUS.TW]:'3W'
+};
+
+// Tetromino shapes (each rotation as array of [row,col] offsets from pivot)
+const TETROMINOES = [
+  { name:'I', color:'#00f0f0', shapes:[[[0,-1],[0,0],[0,1],[0,2]],[[-1,0],[0,0],[1,0],[2,0]],[[0,-1],[0,0],[0,1],[0,2]],[[-1,0],[0,0],[1,0],[2,0]]] },
+  { name:'O', color:'#f0f000', shapes:[[[0,0],[0,1],[1,0],[1,1]],[[0,0],[0,1],[1,0],[1,1]],[[0,0],[0,1],[1,0],[1,1]],[[0,0],[0,1],[1,0],[1,1]]] },
+  { name:'T', color:'#a000f0', shapes:[[[0,-1],[0,0],[0,1],[-1,0]],[[-1,0],[0,0],[1,0],[0,1]],[[0,-1],[0,0],[0,1],[1,0]],[[-1,0],[0,0],[1,0],[0,-1]]] },
+  { name:'S', color:'#00f000', shapes:[[[-1,0],[-1,1],[0,-1],[0,0]],[[0,0],[1,0],[-1,1],[0,1]],[[-1,0],[-1,1],[0,-1],[0,0]],[[0,0],[1,0],[-1,1],[0,1]]] },
+  { name:'Z', color:'#f00000', shapes:[[[-1,-1],[-1,0],[0,0],[0,1]],[[0,0],[1,0],[-1,-1],[0,-1]],[[-1,-1],[-1,0],[0,0],[0,1]],[[0,0],[1,0],[-1,-1],[0,-1]]] },
+  { name:'J', color:'#0000f0', shapes:[[[0,-1],[0,0],[0,1],[-1,-1]],[[-1,0],[0,0],[1,0],[1,1]],[[0,-1],[0,0],[0,1],[1,1]],[[-1,0],[0,0],[1,0],[-1,-1]]] },
+  { name:'L', color:'#f0a000', shapes:[[[0,-1],[0,0],[0,1],[-1,1]],[[-1,0],[0,0],[1,0],[1,-1]],[[0,-1],[0,0],[0,1],[1,-1]],[[-1,0],[0,0],[1,0],[-1,1]]] },
+];
+
+// ─── Board State ─────────────────────────────────────────────────────────────
+// Each cell: null or { color, letter, bonus }
+let board = [];
+let score = 0, level = 1, lines = 0;
+let currentPiece = null, nextPiece = null;
+let gameRunning = false, gameOver = false;
+let dropTimer = null;
+let typedWord = '';
+let wordFeedbackTimer = null;
+
+function emptyBoard() {
+  return Array.from({length:ROWS}, ()=>Array(COLS).fill(null));
+}
+
+// ─── Canvas Setup ────────────────────────────────────────────────────────────
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const nextCanvas = document.getElementById('next-canvas');
+const nctx = nextCanvas.getContext('2d');
+
+// ─── Piece Factory ───────────────────────────────────────────────────────────
+function makePiece(type) {
+  const t = TETROMINOES[type !== undefined ? type : Math.floor(Math.random()*TETROMINOES.length)];
+  // Assign a letter and optional bonus to each cell
+  const cells = t.shapes[0].map(() => ({
+    letter: randomLetter(),
+    bonus: randomBonus(),
+  }));
+  return {
+    type: t,
+    rotation: 0,
+    row: 1,
+    col: Math.floor(COLS/2),
+    cells, // per-mino letter+bonus, indexed same as shapes[rotation]
+  };
+}
+
+function randomBonus() {
+  const r = Math.random();
+  if (r < 0.04) return BONUS.TW;
+  if (r < 0.09) return BONUS.DW;
+  if (r < 0.16) return BONUS.TL;
+  if (r < 0.26) return BONUS.DL;
+  return BONUS.NONE;
+}
+
+function pieceBlocks(piece) {
+  // Returns array of {row, col, letter, bonus, color}
+  const shape = piece.type.shapes[piece.rotation];
+  return shape.map((offset, i) => ({
+    row: piece.row + offset[0],
+    col: piece.col + offset[1],
+    letter: piece.cells[i].letter,
+    bonus: piece.cells[i].bonus,
+    color: piece.type.color,
+  }));
+}
+
+// ─── Collision ───────────────────────────────────────────────────────────────
+function collides(piece, dr=0, dc=0, rot=null) {
+  const rotation = rot !== null ? rot : piece.rotation;
+  const shape = piece.type.shapes[rotation];
+  for (const [or, oc] of shape) {
+    const r = piece.row + or + dr;
+    const c = piece.col + oc + dc;
+    if (c < 0 || c >= COLS || r >= ROWS) return true;
+    if (r >= 0 && board[r][c]) return true;
+  }
+  return false;
+}
+
+// ─── Lock piece to board ──────────────────────────────────────────────────────
+function lockPiece() {
+  const blocks = pieceBlocks(currentPiece);
+  for (const b of blocks) {
+    if (b.row < 0) { triggerGameOver(); return; }
+    board[b.row][b.col] = { color: b.color, letter: b.letter, bonus: b.bonus };
+  }
+  clearFullRows();
+  spawnNext();
+}
+
+function clearFullRows() {
+  let cleared = 0;
+  for (let r = ROWS-1; r >= 0; r--) {
+    if (board[r].every(c => c !== null)) {
+      board.splice(r, 1);
+      board.unshift(Array(COLS).fill(null));
+      cleared++;
+      r++; // recheck same index
+    }
+  }
+  if (cleared > 0) {
+    const pts = cleared * 10 * level;
+    addScore(pts);
+    lines += cleared;
+    level = Math.floor(lines / 10) + 1;
+    updateHUD();
+    showFeedback(`+${pts} pts (${cleared} line${cleared>1?'s':''} cleared!)`, 'good');
+  }
+}
+
+function spawnNext() {
+  currentPiece = nextPiece || makePiece();
+  nextPiece = makePiece();
+  if (collides(currentPiece)) { triggerGameOver(); return; }
+  drawNext();
+}
+
+// ─── Movement ────────────────────────────────────────────────────────────────
+function moveLeft()  { if (!collides(currentPiece,0,-1)) currentPiece.col--; }
+function moveRight() { if (!collides(currentPiece,0,1))  currentPiece.col++; }
+function moveDown()  {
+  if (!collides(currentPiece,1,0)) { currentPiece.row++; return true; }
+  lockPiece(); return false;
+}
+function rotate() {
+  const next = (currentPiece.rotation+1) % 4;
+  if (!collides(currentPiece,0,0,next)) {
+    currentPiece.rotation = next;
+  } else if (!collides(currentPiece,0,-1,next)) {
+    currentPiece.col--; currentPiece.rotation = next;
+  } else if (!collides(currentPiece,0,1,next)) {
+    currentPiece.col++; currentPiece.rotation = next;
+  }
+}
+function hardDrop() {
+  while (!collides(currentPiece,1,0)) currentPiece.row++;
+  lockPiece();
+}
+
+// ─── Game Loop ────────────────────────────────────────────────────────────────
+function tickSpeed() { return Math.max(80, TICK_BASE - (level-1)*70); }
+
+function startDropTimer() {
+  clearInterval(dropTimer);
+  dropTimer = setInterval(()=>{ if(gameRunning) { moveDown(); draw(); } }, tickSpeed());
+}
+
+function addScore(n) {
+  score += n;
+  document.getElementById('score-display').textContent = score;
+}
+function updateHUD() {
+  document.getElementById('level-display').textContent = level;
+  document.getElementById('lines-display').textContent = lines;
+  // restart timer at new speed
+  startDropTimer();
+}
+
+// ─── Drawing ─────────────────────────────────────────────────────────────────
+function drawCell(context, x, y, color, letter, bonus, alpha=1) {
+  context.globalAlpha = alpha;
+  // Background
+  const bg = (bonus !== BONUS.NONE && BONUS_COLORS[bonus]) ? BONUS_COLORS[bonus] : color;
+  context.fillStyle = bg;
+  context.fillRect(x+1, y+1, CELL-2, CELL-2);
+  // Shine
+  context.fillStyle = 'rgba(255,255,255,0.15)';
+  context.fillRect(x+1, y+1, CELL-2, 6);
+  // Border
+  context.strokeStyle = 'rgba(255,255,255,0.25)';
+  context.lineWidth = 1;
+  context.strokeRect(x+1.5, y+1.5, CELL-3, CELL-3);
+  // Letter
+  context.fillStyle = '#fff';
+  context.font = `bold ${bonus!==BONUS.NONE?10:13}px sans-serif`;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(letter, x+CELL/2, y + (bonus!==BONUS.NONE ? CELL/2-3 : CELL/2));
+  // Bonus label
+  if (bonus !== BONUS.NONE) {
+    context.fillStyle = 'rgba(0,0,0,0.7)';
+    context.font = 'bold 8px sans-serif';
+    context.fillText(BONUS_LABEL[bonus], x+CELL/2, y+CELL-7);
+  }
+  // Letter value (small, bottom-right)
+  const val = LETTER_VALUES[letter];
+  if (val) {
+    context.fillStyle = 'rgba(255,255,255,0.7)';
+    context.font = '7px sans-serif';
+    context.textAlign = 'right';
+    context.fillText(val, x+CELL-3, y+CELL-3);
+  }
+  context.globalAlpha = 1;
+  context.textAlign = 'left';
+}
+
+function ghostRows() {
+  if (!currentPiece) return 0;
+  let dr = 0;
+  while (!collides(currentPiece, dr+1, 0)) dr++;
+  return dr;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let r=0;r<ROWS;r++) { ctx.beginPath(); ctx.moveTo(0,r*CELL); ctx.lineTo(COLS*CELL,r*CELL); ctx.stroke(); }
+  for (let c=0;c<COLS;c++) { ctx.beginPath(); ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,ROWS*CELL); ctx.stroke(); }
+  // Board cells
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    if (board[r][c]) drawCell(ctx, c*CELL, r*CELL, board[r][c].color, board[r][c].letter, board[r][c].bonus);
+  }
+  // Ghost piece
+  if (currentPiece && gameRunning) {
+    const dr = ghostRows();
+    const shape = currentPiece.type.shapes[currentPiece.rotation];
+    shape.forEach((offset,i)=>{
+      const gr = currentPiece.row+offset[0]+dr;
+      const gc = currentPiece.col+offset[1];
+      if(gr>=0) drawCell(ctx, gc*CELL, gr*CELL, currentPiece.type.color, currentPiece.cells[i].letter, currentPiece.cells[i].bonus, 0.25);
+    });
+  }
+  // Current piece
+  if (currentPiece && gameRunning) {
+    const blocks = pieceBlocks(currentPiece);
+    for (const b of blocks) {
+      if (b.row >= 0) drawCell(ctx, b.col*CELL, b.row*CELL, b.color, b.letter, b.bonus);
+    }
+  }
+  // Highlight matched letters
+  highlightTyped();
+}
+
+function drawNext() {
+  nctx.clearRect(0,0,120,120);
+  if (!nextPiece) return;
+  const shape = nextPiece.type.shapes[0];
+  const minR = Math.min(...shape.map(o=>o[0])), maxR = Math.max(...shape.map(o=>o[0]));
+  const minC = Math.min(...shape.map(o=>o[1])), maxC = Math.max(...shape.map(o=>o[1]));
+  const offR = Math.floor((4-(maxR-minR+1))/2) - minR;
+  const offC = Math.floor((4-(maxC-minC+1))/2) - minC;
+  shape.forEach((offset,i)=>{
+    const r = offset[0]+offR, c = offset[1]+offC;
+    drawCell(nctx, c*CELL, r*CELL, nextPiece.type.color, nextPiece.cells[i].letter, nextPiece.cells[i].bonus);
+  });
+}
+
+// ─── Word highlighting ────────────────────────────────────────────────────────
+function highlightTyped() {
+  if (!typedWord) return;
+  const matched = findWordCells(typedWord);
+  if (!matched) return;
+  ctx.save();
+  ctx.strokeStyle = '#f0e68c';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#f0e68c';
+  ctx.shadowBlur = 8;
+  for (const {r,c} of matched) {
+    ctx.strokeRect(c*CELL+2, r*CELL+2, CELL-4, CELL-4);
+  }
+  ctx.restore();
+}
+
+// ─── Word Logic ───────────────────────────────────────────────────────────────
+// Find cells on the board matching the typed word (left-to-right, any row, contiguous or not)
+// Strategy: find all board cells whose letters match the word in order (greedy, row by row, left to right)
+function findWordCells(word) {
+  const upper = word.toUpperCase();
+  // Collect all settled cells with their positions
+  const cells = [];
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    if (board[r][c]) cells.push({r,c,letter:board[r][c].letter});
+  }
+  // Try to find a subsequence match (greedy)
+  const result = [];
+  let wi = 0;
+  for (const cell of cells) {
+    if (cell.letter === upper[wi]) { result.push(cell); wi++; }
+    if (wi === upper.length) return result;
+  }
+  return null;
+}
+
+// Compute Scrabble score for a word given its matched cells
+function scoreWord(word, cells) {
+  const upper = word.toUpperCase();
+  let letterSum = 0;
+  let wordMult = 1;
+  for (let i=0;i<cells.length;i++) {
+    const {r,c} = cells[i];
+    const cell = board[r][c];
+    const lv = LETTER_VALUES[upper[i]] || 1;
+    const bonus = cell ? cell.bonus : BONUS.NONE;
+    if (bonus === BONUS.DL) letterSum += lv * 2;
+    else if (bonus === BONUS.TL) letterSum += lv * 3;
+    else letterSum += lv;
+    if (bonus === BONUS.DW) wordMult *= 2;
+    else if (bonus === BONUS.TW) wordMult *= 3;
+  }
+  let total = letterSum * wordMult;
+  if (upper.length >= 7) total *= 2; // 7+ letter bonus
+  return total;
+}
+
+// Remove matched cells and apply gravity
+function removeCells(cells) {
+  for (const {r,c} of cells) board[r][c] = null;
+  applyGravity();
+}
+
+function applyGravity() {
+  // For each column, compact non-null cells to the bottom
+  for (let c=0;c<COLS;c++) {
+    const col = [];
+    for (let r=0;r<ROWS;r++) if (board[r][c]) col.push(board[r][c]);
+    for (let r=0;r<ROWS;r++) board[r][c] = null;
+    for (let i=0;i<col.length;i++) board[ROWS-1-i][c] = col[col.length-1-i];
+  }
+}
+
+// ─── Dictionary (async, using a public word list) ────────────────────────────
+// We use a curated common-words approach: fetch a word list from a CDN.
+// Fallback: a built-in set of ~1000 common words if fetch fails.
+let dictionary = null;
+let dictReady = false;
+
+async function loadDictionary() {
+  try {
+    // Use the dwyl/english-words list (about 370k words) via jsDelivr
+    const res = await fetch('https://cdn.jsdelivr.net/gh/dwyl/english-words@master/words_alpha.txt');
+    if (!res.ok) throw new Error('fetch failed');
+    const text = await res.text();
+    dictionary = new Set(text.split('\n').map(w=>w.trim().toUpperCase()).filter(w=>w.length>=2));
+    dictReady = true;
+    console.log('Dictionary loaded:', dictionary.size, 'words');
+  } catch(e) {
+    console.warn('Dictionary fetch failed, using fallback', e);
+    dictionary = FALLBACK_DICT;
+    dictReady = true;
+  }
+}
+
+function isValidWord(word) {
+  if (!dictReady || !dictionary) return true; // optimistic if not loaded
+  return dictionary.has(word.toUpperCase());
+}
+
+// ─── Word submission ──────────────────────────────────────────────────────────
+function submitWord() {
+  if (!typedWord || typedWord.length < 2) {
+    showFeedback('Word must be at least 2 letters', 'bad'); return;
+  }
+  if (!isValidWord(typedWord)) {
+    showFeedback(`"${typedWord}" is not a valid word`, 'bad');
+    typedWord = ''; updateWordDisplay(); return;
+  }
+  const cells = findWordCells(typedWord);
+  if (!cells) {
+    showFeedback(`Letters for "${typedWord}" not found on board`, 'bad');
+    typedWord = ''; updateWordDisplay(); return;
+  }
+  const pts = scoreWord(typedWord, cells);
+  addScore(pts);
+  const bonusMsg = typedWord.length >= 7 ? ' (7+ letter bonus x2!)' : '';
+  showFeedback(`"${typedWord}" +${pts} pts${bonusMsg}`, 'good');
+  removeCells(cells);
+  typedWord = '';
+  updateWordDisplay();
+  draw();
+}
+
+function updateWordDisplay() {
+  const el = document.getElementById('word-display');
+  el.textContent = typedWord || '';
+}
+
+function showFeedback(msg, cls) {
+  const el = document.getElementById('word-feedback');
+  el.textContent = msg;
+  el.className = cls || '';
+  clearTimeout(wordFeedbackTimer);
+  wordFeedbackTimer = setTimeout(()=>{ el.textContent='Type letters to spell a word from the board, then press Enter'; el.className=''; }, 3000);
+}
+
+// ─── Input Handling ───────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (!gameRunning) return;
+  // Word typing takes priority for letter keys
+  if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+    e.preventDefault();
+    typedWord += e.key.toUpperCase();
+    updateWordDisplay();
+    draw();
+    return;
+  }
+  switch(e.key) {
+    case 'Enter':      e.preventDefault(); submitWord(); break;
+    case 'Backspace':  e.preventDefault(); typedWord = typedWord.slice(0,-1); updateWordDisplay(); draw(); break;
+    case 'Escape':     e.preventDefault(); typedWord=''; updateWordDisplay(); draw(); break;
+    case 'ArrowLeft':  e.preventDefault(); moveLeft();  draw(); break;
+    case 'ArrowRight': e.preventDefault(); moveRight(); draw(); break;
+    case 'ArrowUp':    e.preventDefault(); rotate();    draw(); break;
+    case 'ArrowDown':  e.preventDefault(); moveDown();  draw(); break;
+    case ' ':          e.preventDefault(); hardDrop();  draw(); break;
+  }
+});
+
+// ─── Game Start / Over ────────────────────────────────────────────────────────
+function startGame() {
+  board = emptyBoard();
+  score = 0; level = 1; lines = 0; typedWord = '';
+  document.getElementById('score-display').textContent = '0';
+  document.getElementById('level-display').textContent = '1';
+  document.getElementById('lines-display').textContent = '0';
+  updateWordDisplay();
+  gameOver = false; gameRunning = true;
+  nextPiece = makePiece();
+  spawnNext();
+  startDropTimer();
+  draw();
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function triggerGameOver() {
+  gameRunning = false;
+  clearInterval(dropTimer);
+  const overlay = document.getElementById('overlay');
+  document.getElementById('overlay-title').textContent = 'Game Over';
+  document.getElementById('overlay-msg').textContent = `Final Score: ${score}\nLines: ${lines} | Level: ${level}`;
+  document.getElementById('overlay-btn').textContent = 'Play Again';
+  overlay.style.display = 'flex';
+}
+
+document.getElementById('overlay-btn').addEventListener('click', startGame);
+
+// ─── Fallback Dictionary (~500 common words) ─────────────────────────────────
+const FALLBACK_DICT = new Set([
+  'AA','AB','AD','AE','AG','AH','AI','AL','AM','AN','AR','AS','AT','AW','AX','AY',
+  'BA','BE','BI','BO','BY','DA','DE','DO','ED','EF','EH','EL','EM','EN','ER','ES',
+  'ET','EW','EX','FA','FE','GI','GO','HA','HE','HI','HM','HO','ID','IF','IN','IS',
+  'IT','JO','KA','KI','LA','LI','LO','MA','ME','MI','MM','MO','MU','MY','NA','NE',
+  'NO','NU','OD','OE','OF','OH','OI','OK','OM','ON','OP','OR','OS','OW','OX','OY',
+  'PA','PE','PI','PO','QI','RE','SH','SI','SO','TA','TI','TO','UH','UM','UN','UP',
+  'UT','WE','WO','XI','XU','YA','YE','YO','ZA',
+  'ACE','ACT','ADD','AGE','AGO','AID','AIM','AIR','ALL','AND','ANT','APE','APP',
+  'APT','ARC','ARE','ARK','ARM','ART','ASH','ASK','ATE','AWE','AXE','BAD','BAG',
+  'BAN','BAR','BAT','BAY','BED','BEG','BET','BIG','BIT','BOW','BOX','BOY','BUD',
+  'BUG','BUN','BUS','BUT','BUY','CAB','CAN','CAP','CAR','CAT','COB','COD','COG',
+  'COP','COT','COW','CRY','CUB','CUP','CUR','CUT','DAB','DAD','DAM','DAY','DEN',
+  'DEW','DID','DIG','DIM','DIP','DOC','DOE','DOG','DOT','DRY','DUB','DUG','DUO',
+  'DYE','EAR','EAT','EEL','EGG','ELK','ELM','EMU','END','ERA','EVE','EWE','EYE',
+  'FAD','FAN','FAR','FAT','FAX','FED','FEW','FIG','FIN','FIT','FIX','FLY','FOB',
+  'FOE','FOG','FOR','FOX','FRY','FUB','FUN','FUR','GAB','GAG','GAP','GAS','GAY',
+  'GEL','GEM','GET','GIG','GIN','GNU','GOB','GOD','GOT','GUM','GUN','GUT','GUY',
+  'GYM','HAD','HAM','HAS','HAT','HAY','HEM','HEN','HER','HEW','HID','HIM','HIP',
+  'HIS','HIT','HOB','HOD','HOG','HOP','HOT','HOW','HUB','HUG','HUM','HUT','ICE',
+  'ICY','ILL','IMP','INK','INN','ION','IRE','IRK','IVY','JAB','JAG','JAM','JAR',
+  'JAW','JAY','JET','JIG','JOB','JOG','JOT','JOY','JUG','JUT','KEG','KID','KIT',
+  'LAB','LAD','LAG','LAP','LAW','LAX','LAY','LEA','LED','LEG','LET','LID','LIE',
+  'LIT','LOG','LOT','LOW','LUG','MAD','MAN','MAP','MAR','MAT','MAW','MAY','MEN',
+  'MET','MOB','MOD','MOM','MOP','MOW','MUD','MUG','NAB','NAG','NAP','NAY','NET',
+  'NEW','NIB','NIT','NOB','NOD','NOR','NOT','NOW','NUB','NUN','NUT','OAK','OAR',
+  'OAT','ODD','ODE','OFT','OHM','OIL','OLD','ONE','ORB','ORE','OUR','OUT','OWE',
+  'OWL','OWN','PAD','PAL','PAN','PAP','PAR','PAT','PAW','PAY','PEA','PEG','PEN',
+  'PEP','PET','PEW','PIE','PIG','PIN','PIT','PIX','PLY','POD','POP','POT','POW',
+  'PRY','PUB','PUG','PUN','PUP','PUS','PUT','RAG','RAM','RAN','RAP','RAT','RAW',
+  'RAY','RED','REF','RIB','RID','RIG','RIM','RIP','ROB','ROD','ROT','ROW','RUB',
+  'RUG','RUM','RUN','RUT','SAC','SAD','SAG','SAP','SAT','SAW','SAY','SEA','SET',
+  'SEW','SHY','SIN','SIP','SIR','SIT','SIX','SKI','SKY','SLY','SOB','SOD','SON',
+  'SOP','SOT','SOW','SOY','SPA','SPY','STY','SUB','SUM','SUN','SUP','TAB','TAD',
+  'TAN','TAP','TAR','TAT','TAX','TEA','TEN','THE','TIE','TIN','TIP','TOE','TON',
+  'TOO','TOP','TOT','TOW','TOY','TUB','TUG','TUN','TWO','URN','USE','VAN','VAT',
+  'VET','VIA','VIE','VOW','WAD','WAR','WAS','WAX','WAY','WEB','WED','WET','WHO',
+  'WHY','WIG','WIN','WIT','WOE','WOK','WON','WOO','WOW','YAK','YAM','YAP','YAW',
+  'YEA','YEW','YOD','YOU','ZAP','ZED','ZEN','ZIT','ZOO',
+  'ABLE','ACHE','ACID','AGED','ALSO','ALTO','ARCH','AREA','ARMY','AUNT',
+  'BACK','BAIL','BAIT','BAKE','BALD','BALL','BAND','BANE','BANG','BANK',
+  'BARE','BARK','BARN','BASE','BASH','BASK','BATH','BEAD','BEAM','BEAN',
+  'BEAR','BEAT','BEEF','BEEN','BEER','BELL','BELT','BEND','BEST','BIRD',
+  'BITE','BLOT','BLOW','BLUE','BLUR','BOAR','BOAT','BOLD','BOLT','BOND',
+  'BONE','BOOK','BOOM','BOOT','BORE','BORN','BOTH','BOUT','BOWL','BRAG',
+  'BRAN','BRAT','BREW','BRIM','BROW','BUCK','BULK','BULL','BUMP','BURN',
+  'BURP','BURY','BUSH','BUSY','BUZZ','CAGE','CAKE','CALF','CALL','CALM',
+  'CAME','CAMP','CANE','CARD','CARE','CART','CASE','CASH','CAST','CAVE',
+  'CELL','CHAT','CHEF','CHEW','CHIP','CHOP','CITE','CITY','CLAM','CLAP',
+  'CLAW','CLAY','CLIP','CLOP','CLOT','CLUB','CLUE','COAL','COAT','CODE',
+  'COIL','COIN','COLD','COME','CONE','COOK','COOL','COPE','COPY','CORD',
+  'CORE','CORK','CORN','COST','COZY','CRAB','CREW','CROP','CROW','CUBE',
+  'CURB','CURE','CURL','CUTE','DAMP','DARE','DARK','DART','DASH','DATA',
+  'DATE','DAWN','DEAD','DEAF','DEAL','DEAR','DEBT','DECK','DEED','DEEP',
+  'DEER','DEFT','DELL','DENT','DESK','DIAL','DICE','DIET','DIME','DINE',
+  'DIRE','DIRT','DISC','DISH','DISK','DIVE','DOCK','DOME','DONE','DOOM',
+  'DOOR','DOSE','DOVE','DOWN','DRAG','DRAW','DREW','DRIP','DROP','DRUM',
+  'DUAL','DULL','DUMB','DUMP','DUNE','DUSK','DUST','DUTY','EACH','EARL',
+  'EARN','EASE','EAST','EASY','EDGE','EMIT','EPIC','EVEN','EVER','EVIL',
+  'EXAM','FACE','FACT','FAIL','FAIR','FAKE','FALL','FAME','FARM','FAST',
+  'FATE','FAWN','FEAR','FEAT','FEED','FEEL','FEET','FELL','FELT','FILE',
+  'FILL','FILM','FIND','FINE','FIRE','FIRM','FISH','FIST','FLAG','FLAT',
+  'FLAW','FLEA','FLEW','FLIP','FLIT','FLOG','FLOW','FOAM','FOLD','FOLK',
+  'FOND','FONT','FOOD','FOOL','FOOT','FORD','FORE','FORK','FORM','FORT',
+  'FOUL','FOUR','FREE','FROM','FUEL','FULL','FUME','FUND','FUSE','FUSS',
+  'GALE','GAME','GANG','GAPE','GATE','GAVE','GAZE','GEAR','GILD','GILL',
+  'GIST','GIVE','GLAD','GLEE','GLEN','GLOW','GLUE','GLUM','GOAL','GOAT',
+  'GOLD','GOLF','GONE','GOOD','GOWN','GRAB','GRAM','GRAY','GREW','GREY',
+  'GRIN','GRIP','GRIT','GROW','GULF','GULL','GUST','HACK','HAIL','HAIR',
+  'HALF','HALL','HALT','HAND','HANG','HARD','HARE','HARM','HARP','HASH',
+  'HATE','HAUL','HAVE','HAWK','HAZE','HEAD','HEAL','HEAP','HEAR','HEAT',
+  'HEEL','HELD','HELM','HELP','HERB','HERD','HERE','HERO','HIGH','HILL',
+  'HINT','HIRE','HIVE','HOLD','HOLE','HOLY','HOME','HOOD','HOOK','HOPE',
+  'HORN','HOSE','HOST','HOUR','HUGE','HULL','HUNG','HUNT','HURL','HURT',
+  'HYMN','IDEA','IDLE','INCH','INTO','IRON','ISLE','ITEM','JADE','JAIL',
+  'JEST','JOIN','JOKE','JOLT','JUMP','JUST','KEEN','KEEP','KELP','KICK',
+  'KIND','KING','KISS','KNIT','KNOB','KNOT','KNOW','LACE','LACK','LAID',
+  'LAKE','LAMB','LAMP','LAND','LANE','LARK','LASH','LAST','LATE','LAUD',
+  'LAWN','LEAD','LEAF','LEAK','LEAN','LEAP','LEFT','LEND','LENS','LEST',
+  'LEVY','LICK','LIFE','LIFT','LIKE','LIME','LINE','LINK','LION','LIST',
+  'LIVE','LOAD','LOAF','LOAN','LOCK','LOFT','LONE','LONG','LOOK','LOOM',
+  'LOOP','LORD','LORE','LOSE','LOSS','LOST','LOUD','LOVE','LUCK','LULL',
+  'LUMP','LUNG','LURE','LURK','MADE','MAIL','MAIN','MAKE','MALE','MALL',
+  'MALT','MANE','MANY','MARK','MARS','MASH','MASK','MASS','MAST','MATE',
+  'MATH','MAZE','MEAD','MEAL','MEAN','MEAT','MEET','MELT','MEMO','MENU',
+  'MERE','MESH','MILD','MILE','MILK','MILL','MIME','MIND','MINE','MINT',
+  'MISS','MIST','MODE','MOLE','MOLT','MONK','MOOD','MOON','MOOR','MORE',
+  'MOST','MOTH','MOVE','MUCH','MULE','MUSE','MUST','MYTH','NAIL','NAME',
+  'NAPE','NAVY','NEAR','NEAT','NECK','NEED','NEST','NEWS','NEXT','NICE',
+  'NINE','NODE','NONE','NOON','NORM','NOSE','NOTE','NOUN','NUDE','NUMB',
+  'OATH','OBEY','ODDS','ONCE','ONLY','OPEN','ORAL','ORCA','OVEN','OVER',
+  'PACE','PACK','PAGE','PAID','PAIN','PAIR','PALE','PALM','PANE','PARK',
+  'PART','PASS','PAST','PATH','PAVE','PEAK','PEAR','PEEL','PEER','PELT',
+  'PERK','PEST','PICK','PIER','PILE','PILL','PINE','PINK','PIPE','PLAN',
+  'PLAY','PLEA','PLOD','PLOT','PLOW','PLOY','PLUM','PLUS','POEM','POET',
+  'POLE','POLL','POND','POOL','POOR','PORE','PORT','POSE','POST','POUR',
+  'PRAY','PREY','PROD','PROP','PULL','PUMP','PURE','PUSH','QUIT','QUIZ',
+  'RACE','RACK','RAGE','RAID','RAIL','RAIN','RAKE','RAMP','RANG','RANK',
+  'RANT','RASH','RATE','READ','REAL','REAP','REEL','RELY','RENT','REST',
+  'RICE','RICH','RIDE','RIFE','RIFT','RING','RIOT','RISE','RISK','ROAD',
+  'ROAM','ROAR','ROBE','ROCK','RODE','ROLE','ROLL','ROOF','ROOM','ROOT',
+  'ROPE','ROSE','ROUT','RUDE','RUIN','RULE','RUSH','RUST','SAFE','SAGE',
+  'SAIL','SAKE','SALE','SALT','SAME','SAND','SANE','SANG','SANK','SAVE',
+  'SCAN','SCAR','SEAL','SEAM','SEAT','SEED','SEEK','SEEM','SEEN','SELF',
+  'SELL','SEND','SENT','SHED','SHIN','SHIP','SHOE','SHOP','SHOT','SHOW',
+  'SHUT','SICK','SIDE','SIGH','SIGN','SILK','SILL','SING','SINK','SIZE',
+  'SKIN','SKIP','SLAB','SLAM','SLAP','SLAT','SLAY','SLED','SLIM','SLIP',
+  'SLIT','SLOB','SLOP','SLOT','SLOW','SLUG','SLUM','SLUR','SMUG','SNAP',
+  'SNOB','SNOW','SOAK','SOAP','SOAR','SOCK','SOFT','SOIL','SOLD','SOLE',
+  'SOME','SONG','SOON','SORE','SORT','SOUL','SOUP','SOUR','SPAN','SPAR',
+  'SPIN','SPIT','SPOT','SPUR','STAB','STAR','STAY','STEM','STEP','STEW',
+  'STIR','STOP','STUB','STUN','SUCH','SUIT','SULK','SUNG','SUNK','SURE',
+  'SURF','SWAN','SWAP','SWAT','SWAY','SWIM','TAIL','TALE','TALK','TALL',
+  'TAME','TANG','TANK','TAPE','TASK','TAUT','TEAM','TEAR','TEEM','TELL',
+  'TEND','TENT','TERM','TEST','THAN','THAT','THEM','THEN','THEY','THIN',
+  'THIS','THOU','THUS','TICK','TIDE','TIDY','TIER','TILL','TILT','TIME',
+  'TINY','TIRE','TOAD','TOLD','TOLL','TOMB','TOME','TONE','TONG','TOOK',
+  'TOOL','TORE','TORN','TOSS','TOUR','TOWN','TRAP','TRAY','TREE','TRIM',
+  'TRIO','TRIP','TROD','TROT','TRUE','TUCK','TUFT','TUNE','TURF','TURN',
+  'TUSK','TWIN','TYPE','UGLY','UNDO','UNIT','UPON','URGE','USED','USER',
+  'VAIN','VALE','VANE','VARY','VAST','VEIL','VEIN','VERY','VEST','VIEW',
+  'VINE','VOID','VOLT','VOTE','WADE','WAGE','WAIL','WAIT','WAKE','WALK',
+  'WALL','WAND','WANT','WARD','WARM','WARN','WARP','WART','WASH','WAVE',
+  'WEAK','WEAL','WEAN','WEAR','WEED','WEEK','WELD','WELL','WELT','WENT',
+  'WERE','WEST','WHAT','WHEN','WHET','WHIM','WHIP','WHIT','WIDE','WIFE',
+  'WILD','WILL','WILT','WIND','WINE','WING','WINK','WIRE','WISE','WISH',
+  'WITH','WOKE','WOLF','WOMB','WOOD','WOOL','WORD','WORE','WORK','WORM',
+  'WORN','WOVE','WRAP','WREN','WRIT','YARD','YARN','YAWN','YEAR','YELL',
+  'YOGA','YOKE','YORE','YOUR','ZEAL','ZERO','ZEST','ZINC','ZONE',
+  'ABOUT','ABOVE','ABUSE','ACUTE','ADMIT','ADOPT','ADULT','AFTER','AGAIN',
+  'AGENT','AGREE','AHEAD','ALARM','ALBUM','ALERT','ALIKE','ALIGN','ALIVE',
+  'ALLEY','ALLOW','ALONE','ALONG','ALOUD','ALTER','ANGEL','ANGER','ANGLE',
+  'ANGRY','ANIME','ANNEX','ANNOY','ANTIC','ANVIL','APART','APPLE','APPLY',
+  'ARENA','ARGUE','ARISE','ARMOR','AROMA','AROSE','ARRAY','ARROW','ASIDE',
+  'ASSET','ATLAS','ATTIC','AUDIO','AUDIT','AVOID','AWAKE','AWARD','AWARE',
+  'AWFUL','BADLY','BAKER','BASIC','BASIS','BATCH','BEACH','BEGAN','BEGIN',
+  'BEING','BELOW','BENCH','BIBLE','BIRTH','BISON','BITCH','BITER','BLACK',
+  'BLADE','BLAME','BLAND','BLANK','BLAST','BLAZE','BLEAK','BLEED','BLEND',
+  'BLESS','BLIND','BLOCK','BLOOD','BLOOM','BLOWN','BOARD','BONUS','BOOST',
+  'BOOTH','BOUND','BOXER','BRACE','BRAIN','BRAND','BRAVE','BREAD','BREAK',
+  'BREED','BRICK','BRIDE','BRIEF','BRING','BRISK','BROAD','BROKE','BROOK',
+  'BROOM','BROTH','BROWN','BRUSH','BUDDY','BUILD','BUILT','BUNCH','BURST',
+  'BUYER','CABIN','CAMEL','CANDY','CARRY','CATCH','CAUSE','CHAIN','CHAIR',
+  'CHALK','CHAOS','CHARM','CHART','CHASE','CHEAP','CHEAT','CHECK','CHEEK',
+  'CHEER','CHESS','CHEST','CHIEF','CHILD','CHINA','CHOIR','CHORD','CHOSE',
+  'CHUNK','CIVIC','CIVIL','CLAIM','CLASH','CLASS','CLEAN','CLEAR','CLERK',
+  'CLICK','CLIFF','CLIMB','CLING','CLOCK','CLONE','CLOSE','CLOTH','CLOUD',
+  'COACH','COAST','COBRA','COLOR','COMIC','COMMA','CORAL','COULD','COUNT',
+  'COURT','COVER','CRACK','CRAFT','CRANE','CRASH','CRAZY','CREAM','CREEK',
+  'CRIME','CRISP','CROSS','CROWD','CROWN','CRUEL','CRUSH','CRUST','CURVE',
+  'CYCLE','DAILY','DANCE','DEATH','DEBUT','DECOY','DELAY','DELTA','DENSE',
+  'DEPOT','DEPTH','DERBY','DEVIL','DIRTY','DISCO','DITCH','DIVER','DIZZY',
+  'DODGE','DOING','DOUBT','DOUGH','DRAFT','DRAIN','DRAKE','DRAMA','DRANK',
+  'DRAPE','DRAWN','DREAM','DRESS','DRIED','DRIFT','DRINK','DRIVE','DROVE',
+  'DROWN','DRYER','DYING','EAGER','EAGLE','EARLY','EARTH','EIGHT','ELITE',
+  'EMPTY','ENEMY','ENJOY','ENTER','ENTRY','EQUAL','ERROR','ESSAY','EVERY',
+  'EXACT','EXIST','EXTRA','FABLE','FACED','FAITH','FALSE','FANCY','FATAL',
+  'FAULT','FEAST','FENCE','FEVER','FIBER','FIELD','FIFTH','FIFTY','FIGHT',
+  'FINAL','FIRST','FIXED','FLAME','FLASH','FLASK','FLESH','FLOAT','FLOCK',
+  'FLOOD','FLOOR','FLOUR','FLUID','FLUTE','FOCUS','FORCE','FORGE','FORTH',
+  'FORUM','FOUND','FRAME','FRANK','FRAUD','FRESH','FRONT','FROST','FROZE',
+  'FRUIT','FULLY','FUNNY','GHOST','GIANT','GIVEN','GLAND','GLASS','GLAZE',
+  'GLOBE','GLOOM','GLORY','GLOVE','GOING','GRACE','GRADE','GRAIN','GRAND',
+  'GRANT','GRAPE','GRASP','GRASS','GRAVE','GREAT','GREED','GREEN','GREET',
+  'GRIEF','GRIND','GROAN','GROIN','GROOM','GROSS','GROUP','GROVE','GUARD',
+  'GUESS','GUEST','GUIDE','GUILD','GUILE','GUISE','GUSTO','HABIT','HAPPY',
+  'HARSH','HASTE','HAVEN','HEART','HEAVY','HENCE','HINGE','HIPPO','HOIST',
+  'HONOR','HORSE','HOTEL','HOUSE','HUMAN','HUMOR','HURRY','HYENA','IMAGE',
+  'IMPLY','INDEX','INNER','INPUT','INTER','INTRO','ISSUE','IVORY','JEWEL',
+  'JOINT','JOKER','JUDGE','JUICE','JUICY','JUMBO','KAYAK','KNEEL','KNIFE',
+  'KNOCK','KNOWN','LABEL','LANCE','LARGE','LASER','LATER','LAUGH','LAYER',
+  'LEARN','LEASE','LEAST','LEAVE','LEGAL','LEMON','LEVEL','LIGHT','LIMIT',
+  'LINEN','LINER','LOCAL','LODGE','LOGIC','LOOSE','LOVER','LOWER','LUCKY',
+  'LUNAR','LUNCH','LYING','MAGIC','MAJOR','MAKER','MANOR','MAPLE','MARCH',
+  'MATCH','MAYOR','MEDIA','MERCY','MERIT','METAL','MIGHT','MINOR','MINUS',
+  'MIRTH','MISER','MIXED','MODEL','MONEY','MONTH','MORAL','MOTOR','MOUNT',
+  'MOUSE','MOUTH','MOVIE','MUDDY','MUSIC','NAIVE','NERVE','NEVER','NIGHT',
+  'NOBLE','NOISE','NORTH','NOTED','NOVEL','NURSE','NYMPH','OCCUR','OCEAN',
+  'OFFER','OFTEN','OLIVE','ONSET','OPERA','ORBIT','ORDER','OTHER','OUGHT',
+  'OUTER','OWNED','OWNER','OXIDE','OZONE','PAINT','PANEL','PANIC','PAPER',
+  'PARTY','PASTA','PATCH','PAUSE','PEACE','PEARL','PEDAL','PENNY','PERCH',
+  'PHASE','PHONE','PHOTO','PIANO','PIECE','PILOT','PITCH','PIXEL','PIZZA',
+  'PLACE','PLAIN','PLANE','PLANT','PLATE','PLAZA','PLEAD','PLUCK','PLUMB',
+  'PLUME','PLUNK','POINT','POLAR','POPPY','PORCH','POSED','POWER','PRESS',
+  'PRICE','PRIDE','PRIME','PRINT','PRIOR','PRIZE','PROBE','PRONE','PROOF',
+  'PROSE','PROUD','PROVE','PROWL','PSALM','PULSE','PUNCH','PUPIL','PURSE',
+  'QUEEN','QUERY','QUEST','QUEUE','QUICK','QUIET','QUOTA','QUOTE','RABBI',
+  'RADAR','RADIO','RAISE','RALLY','RANCH','RANGE','RAPID','RATIO','REACH',
+  'READY','REALM','REBEL','REFER','REIGN','RELAX','REPAY','REPEL','REPLY',
+  'RIDER','RIDGE','RIFLE','RIGHT','RISKY','RIVAL','RIVER','ROBIN','ROBOT',
+  'ROCKY','ROUGE','ROUGH','ROUND','ROUTE','ROYAL','RUGBY','RULER','RURAL',
+  'SADLY','SAINT','SALAD','SAUCE','SCALE','SCARE','SCENE','SCONE','SCOPE',
+  'SCORE','SCOUT','SCREW','SEIZE','SENSE','SERVE','SEVEN','SHADE','SHAFT',
+  'SHAKE','SHALL','SHAME','SHAPE','SHARE','SHARK','SHARP','SHEAR','SHEEP',
+  'SHEER','SHEET','SHELF','SHELL','SHIFT','SHINE','SHIRT','SHOCK','SHORE',
+  'SHORT','SHOUT','SIGHT','SINCE','SIXTH','SIXTY','SIZED','SKILL','SKULL',
+  'SKUNK','SLACK','SLAIN','SLANT','SLASH','SLAVE','SLEEP','SLEET','SLICE',
+  'SLIDE','SLOPE','SMART','SMELL','SMILE','SMITE','SMOKE','SNAIL','SNAKE',
+  'SNARE','SNEAK','SNIFF','SOLAR','SOLID','SOLVE','SORRY','SOUTH','SPACE',
+  'SPARE','SPARK','SPEAK','SPEAR','SPEED','SPEND','SPICE','SPILL','SPINE',
+  'SPITE','SPLIT','SPOKE','SPOON','SPORT','SPRAY','SQUAD','STACK','STAFF',
+  'STAGE','STAIN','STAIR','STAKE','STALE','STALL','STAMP','STAND','STARE',
+  'START','STATE','STAVE','STEAL','STEAM','STEEL','STEEP','STEER','STERN',
+  'STICK','STIFF','STILL','STING','STOCK','STOMP','STONE','STOOD','STORE',
+  'STORM','STORY','STOUT','STOVE','STRAP','STRAW','STRAY','STRIP','STRUT',
+  'STUCK','STUDY','STUFF','STUMP','STYLE','SUGAR','SUITE','SUNNY','SUPER',
+  'SURGE','SWAMP','SWEAR','SWEAT','SWEEP','SWEET','SWEPT','SWIFT','SWINE',
+  'SWING','SWIPE','SWIRL','SWORD','SWORE','SWORN','TABLE','TASTE','TEACH',
+  'TEETH','TEMPO','TENSE','TENTH','THANK','THEME','THERE','THESE','THICK',
+  'THING','THINK','THIRD','THORN','THOSE','THREE','THREW','THROW','THUMB',
+  'TIGER','TIGHT','TIMER','TIRED','TITLE','TODAY','TOKEN','TOPIC','TORCH',
+  'TOTAL','TOUCH','TOUGH','TOWEL','TOWER','TOXIC','TRACE','TRACK','TRADE',
+  'TRAIL','TRAIN','TRAIT','TRAMP','TRASH','TREAD','TREAT','TREND','TRIAL',
+  'TRIBE','TRICK','TRIED','TROOP','TROUT','TRUCE','TRUCK','TRULY','TRUMP',
+  'TRUNK','TRUST','TRUTH','TUMOR','TUNER','TUNIC','TWIRL','TWIST','ULTRA',
+  'UNCLE','UNDER','UNIFY','UNION','UNITE','UNITY','UNTIL','UPPER','UPSET',
+  'URBAN','USAGE','USHER','USUAL','UTTER','VALID','VALUE','VALVE','VAPOR',
+  'VAULT','VERSE','VICAR','VIDEO','VIGOR','VIRAL','VIRUS','VISIT','VISOR',
+  'VISTA','VITAL','VIVID','VOCAL','VOICE','VOTER','VYING','WAGER','WASTE',
+  'WATCH','WATER','WEARY','WEAVE','WEDGE','WEIGH','WEIRD','WHALE','WHEAT',
+  'WHEEL','WHERE','WHICH','WHILE','WHIRL','WHITE','WHOLE','WHOSE','WIDER',
+  'WITCH','WOMAN','WOMEN','WORLD','WORRY','WORSE','WORST','WORTH','WOULD',
+  'WOUND','WRATH','WRITE','WROTE','YACHT','YEARN','YIELD','YOUNG','YOUTH',
+  'ZEBRA'
+].map(w=>w.toUpperCase()));
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadDictionary();
+draw();
+</script>
+</body>
+</html>
