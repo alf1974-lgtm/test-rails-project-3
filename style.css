@@ -1,0 +1,163 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Title ────────────────────────────────────────────────── */
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.4rem;
+  background: linear-gradient(135deg, #e94560, #0f3460);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Status banner ────────────────────────────────────────── */
+#status {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.4rem;
+  min-height: 1.8rem;
+  transition: color 0.25s;
+}
+
+#status.x-turn  { color: #e94560; }
+#status.o-turn  { color: #4fc3f7; }
+#status.winner  { color: #ffd700; font-size: 1.5rem; }
+#status.draw    { color: #aaa;    font-size: 1.5rem; }
+
+/* ── Score board ──────────────────────────────────────────── */
+#scoreboard {
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 1.6rem;
+  font-size: 1rem;
+}
+
+.score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.65;
+}
+
+.score-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-box.x .score-value { color: #e94560; }
+.score-box.draws .score-value { color: #aaa; }
+.score-box.o .score-value { color: #4fc3f7; }
+
+/* ── Board ────────────────────────────────────────────────── */
+#board {
+  display: grid;
+  grid-template-columns: repeat(3, 110px);
+  grid-template-rows:    repeat(3, 110px);
+  gap: 10px;
+  margin-bottom: 1.8rem;
+}
+
+/* ── Cells ────────────────────────────────────────────────── */
+.cell {
+  background: #16213e;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cell:hover:not(.taken) {
+  background: #0f3460;
+  transform: scale(1.05);
+}
+
+.cell.taken {
+  cursor: default;
+}
+
+.cell.x { color: #e94560; }
+.cell.o { color: #4fc3f7; }
+
+/* pop-in animation when a mark is placed */
+@keyframes pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.cell.x span,
+.cell.o span {
+  display: inline-block;
+  animation: pop 0.22s ease-out forwards;
+}
+
+/* winning cells highlight */
+.cell.winning {
+  background: #0f3460;
+  box-shadow: 0 0 18px 4px rgba(255, 215, 0, 0.45);
+}
+
+.cell.winning.x { color: #ffd700; }
+.cell.winning.o { color: #ffd700; }
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 1rem;
+}
+
+button {
+  padding: 0.6rem 1.6rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+button:hover  { opacity: 0.85; transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+
+#btn-restart {
+  background: #e94560;
+  color: #fff;
+}
+
+#btn-reset-scores {
+  background: #0f3460;
+  color: #eee;
+  border: 1px solid #4fc3f7;
+}
