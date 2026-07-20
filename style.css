@@ -1,0 +1,315 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f0f4f8;
+  --surface:     #ffffff;
+  --primary:     #4f46e5;
+  --primary-dk:  #3730a3;
+  --accent:      #06b6d4;
+  --danger:      #ef4444;
+  --success:     #22c55e;
+  --text:        #1e293b;
+  --muted:       #64748b;
+  --border:      #cbd5e1;
+  --cell-size:   64px;
+  --cage-border: 3px;
+  --thin-border: 1px;
+  --radius:      10px;
+  --shadow:      0 4px 24px rgba(0,0,0,.10);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 24px 12px 48px;
+}
+
+#app {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+header { text-align: center; }
+
+header h1 {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--primary);
+}
+
+.subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+/* ── Controls ─────────────────────────────────────────────── */
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  padding: 14px 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+}
+
+#controls label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+#controls select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: .9rem;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+#controls button {
+  padding: 7px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+
+#new-game-btn { background: var(--primary);  color: #fff; }
+#new-game-btn:hover { background: var(--primary-dk); }
+
+#check-btn  { background: var(--accent); color: #fff; }
+#check-btn:hover  { filter: brightness(1.1); }
+
+#solve-btn  { background: #f59e0b; color: #fff; }
+#solve-btn:hover  { filter: brightness(1.1); }
+
+#clear-btn  { background: var(--border); color: var(--text); }
+#clear-btn:hover  { background: #b0bec5; }
+
+#controls button:active { transform: scale(.96); }
+
+/* ── Timer / status ───────────────────────────────────────── */
+#timer-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: .95rem;
+}
+
+#timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+#status-msg {
+  font-weight: 600;
+  min-width: 160px;
+  text-align: center;
+  transition: color .3s;
+}
+#status-msg.ok    { color: var(--success); }
+#status-msg.error { color: var(--danger);  }
+#status-msg.info  { color: var(--accent);  }
+
+/* ── Board wrapper ────────────────────────────────────────── */
+#board-wrapper {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  overflow: auto;
+  max-width: 100%;
+}
+
+/* ── Grid ─────────────────────────────────────────────────── */
+#board {
+  display: grid;
+  /* columns set dynamically via JS */
+  border-collapse: collapse;
+  position: relative;
+  /* outer border */
+  border: 3px solid var(--text);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* ── Cells ────────────────────────────────────────────────── */
+.cell {
+  width:  var(--cell-size);
+  height: var(--cell-size);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface);
+  /* thin inner borders by default */
+  border-right:  var(--thin-border) solid var(--border);
+  border-bottom: var(--thin-border) solid var(--border);
+  transition: background .12s;
+}
+
+/* Remove right border on last column, bottom border on last row */
+.cell.last-col  { border-right:  none; }
+.cell.last-row  { border-bottom: none; }
+
+/* Cage borders — added via JS as classes */
+.cell.cage-top    { border-top:    var(--cage-border) solid var(--text); }
+.cell.cage-right  { border-right:  var(--cage-border) solid var(--text); }
+.cell.cage-bottom { border-bottom: var(--cage-border) solid var(--text); }
+.cell.cage-left   { border-left:   var(--cage-border) solid var(--text); }
+
+/* Selected cell */
+.cell.selected {
+  background: #e0e7ff;
+  z-index: 1;
+}
+
+/* Same-row / same-column highlight */
+.cell.highlight {
+  background: #f1f5f9;
+}
+
+/* Same cage highlight */
+.cell.cage-highlight {
+  background: #ede9fe;
+}
+
+/* Error */
+.cell.error {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+/* Correct (after check) */
+.cell.correct {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Solved / given */
+.cell.given {
+  color: var(--primary-dk);
+  background: #eef2ff;
+  cursor: default;
+}
+
+/* ── Cage label ───────────────────────────────────────────── */
+.cage-label {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: .58rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Number pad ───────────────────────────────────────────── */
+#numpad {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.numpad-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s, color .12s, transform .1s;
+}
+
+.numpad-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.numpad-btn:active { transform: scale(.92); }
+
+.numpad-btn.erase {
+  border-color: var(--danger);
+  color: var(--danger);
+  font-size: .8rem;
+}
+.numpad-btn.erase:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ── Instructions ─────────────────────────────────────────── */
+#instructions {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  width: 100%;
+  font-size: .88rem;
+  color: var(--muted);
+}
+
+#instructions h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+#instructions ul {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root { --cell-size: 48px; }
+  header h1 { font-size: 2rem; }
+  .cage-label { font-size: .5rem; }
+  .cell { font-size: 1.1rem; }
+}
+
+/* ── Confetti overlay (win animation) ────────────────────── */
+#confetti-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 999;
+}
