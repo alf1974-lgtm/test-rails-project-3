@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════════════════
+   TETROGGLEABLE — Main Stylesheet
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Reset & base ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 16px 8px;
+  user-select: none;
+}
+
+/* ── Title ────────────────────────────────────────────────────────── */
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #e94560, #0f3460, #533483);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 0.78rem;
+  color: #888;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+.game-wrapper {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Shared panel box ─────────────────────────────────────────────── */
+.panel-box {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.panel-box h3 {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* ── Left panel ───────────────────────────────────────────────────── */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 160px;
+}
+
+.score-val {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #e94560;
+}
+
+.level-val,
+.lines-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #a8dadc;
+}
+
+#next-canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ── Main board ───────────────────────────────────────────────────── */
+#board-canvas {
+  border: 2px solid #0f3460;
+  border-radius: 4px;
+  display: block;
+  box-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
+}
+
+/* ── Right panel ──────────────────────────────────────────────────── */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 200px;
+}
+
+/* ── Word input area ──────────────────────────────────────────────── */
+.word-area {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.word-area h3 {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+#word-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #e2e2e2;
+  min-height: 2rem;
+  background: #0d1b2a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  text-align: center;
+  border: 1px solid #1a3a5c;
+}
+
+#word-feedback {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  min-height: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.feedback-ok   { color: #57cc99; }
+.feedback-bad  { color: #e94560; }
+.feedback-info { color: #a8dadc; }
+
+/* ── Word history ─────────────────────────────────────────────────── */
+.history-box {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px 12px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.history-box h3 {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.history-entry {
+  font-size: 0.78rem;
+  padding: 2px 0;
+  border-bottom: 1px solid #1a3a5c;
+  display: flex;
+  justify-content: space-between;
+}
+
+.history-entry .hw { color: #a8dadc; font-weight: 600; }
+.history-entry .hp { color: #e94560; }
+
+/* ── Bonus legend ─────────────────────────────────────────────────── */
+.legend-box {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.legend-box h3 {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  font-size: 0.72rem;
+  color: #ccc;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── Controls reference ───────────────────────────────────────────── */
+.controls-box {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.controls-box h3 {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.ctrl-row {
+  font-size: 0.72rem;
+  color: #aaa;
+  margin-bottom: 3px;
+}
+
+.ctrl-row kbd {
+  background: #0f3460;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  color: #e0e0e0;
+  border: 1px solid #1a5276;
+}
+
+/* ── Overlay screens ──────────────────────────────────────────────── */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 18px;
+}
+
+#overlay h2 {
+  font-size: 2.2rem;
+  letter-spacing: 4px;
+  color: #e94560;
+}
+
+#overlay p {
+  color: #aaa;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+.btn {
+  background: linear-gradient(135deg, #e94560, #c0392b);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 32px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn:hover { opacity: 0.85; }
+
+#final-score {
+  font-size: 1.4rem;
+  color: #a8dadc;
+  font-weight: 700;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #0d1b2a; }
+::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 3px; }

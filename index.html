@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tetroggleable</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+<h1>TETROGGLEABLE</h1>
+<p class="subtitle">TETRIS · BOGGLE · SCRABBLE</p>
+
+<div class="game-wrapper">
+
+  <!-- ── Left panel ─────────────────────────────────────────────── -->
+  <div class="left-panel">
+    <div class="panel-box">
+      <h3>Score</h3>
+      <div class="score-val" id="score-display">0</div>
+    </div>
+    <div class="panel-box">
+      <h3>Level</h3>
+      <div class="level-val" id="level-display">1</div>
+    </div>
+    <div class="panel-box">
+      <h3>Lines</h3>
+      <div class="lines-val" id="lines-display">0</div>
+    </div>
+    <div class="panel-box">
+      <h3>Next</h3>
+      <canvas id="next-canvas" width="120" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Board ──────────────────────────────────────────────────── -->
+  <canvas id="board-canvas" width="300" height="600"></canvas>
+
+  <!-- ── Right panel ────────────────────────────────────────────── -->
+  <div class="right-panel">
+
+    <div class="word-area">
+      <h3>Type a Word</h3>
+      <div id="word-display">_</div>
+      <div id="word-feedback" class="feedback-info">Type letters, Enter to submit</div>
+    </div>
+
+    <div class="history-box">
+      <h3>Words Played</h3>
+      <div id="word-history"></div>
+    </div>
+
+    <div class="legend-box">
+      <h3>Bonus Tiles</h3>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#ffb3c6;"></div>
+        <span>Double Word (DW)</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#e05c8a;"></div>
+        <span>Triple Word (TW)</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#90e0ef;"></div>
+        <span>Double Letter (DL)</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#0077b6;"></div>
+        <span>Triple Letter (TL)</span>
+      </div>
+    </div>
+
+    <div class="controls-box">
+      <h3>Controls</h3>
+      <div class="ctrl-row"><kbd>←</kbd> <kbd>→</kbd> Move</div>
+      <div class="ctrl-row"><kbd>↑</kbd> Rotate</div>
+      <div class="ctrl-row"><kbd>↓</kbd> Soft drop</div>
+      <div class="ctrl-row"><kbd>Space</kbd> Hard drop</div>
+      <div class="ctrl-row"><kbd>A–Z</kbd> Type word</div>
+      <div class="ctrl-row"><kbd>Enter</kbd> Submit word</div>
+      <div class="ctrl-row"><kbd>Backspace</kbd> Delete letter</div>
+      <div class="ctrl-row"><kbd>Esc</kbd> Clear word</div>
+      <div class="ctrl-row"><kbd>P</kbd> Pause</div>
+    </div>
+
+  </div><!-- /.right-panel -->
+</div><!-- /.game-wrapper -->
+
+<!-- ── Overlay (start / game-over screen) ─────────────────────────── -->
+<div id="overlay">
+  <h2 id="overlay-title">TETROGGLEABLE</h2>
+  <p id="overlay-msg">
+    Move blocks with <strong>← →</strong>, rotate with <strong>↑</strong>,
+    hard-drop with <strong>Space</strong>.<br><br>
+    Type letters to spell words from settled blocks —
+    hit <strong>Enter</strong> to score!<br><br>
+    Bonus tiles multiply your letter &amp; word scores.
+    Words ≥ 7 letters get <strong>2×</strong>!
+  </p>
+  <div id="final-score" style="display:none;"></div>
+  <button class="btn" id="start-btn">START GAME</button>
+</div>
+
+<!-- Entry point — type="module" enables ES module imports -->
+<script type="module">
+  import { boot } from './js/game.js';
+  boot();
+</script>
+
+</body>
+</html>
