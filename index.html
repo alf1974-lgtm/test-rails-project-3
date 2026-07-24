@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetroggleable - Tetris + Boggle + Scrabble</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .game-board {
+            border: 3px solid #333;
+            background: #1a1a1a;
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            grid-template-rows: repeat(20, 30px);
+            gap: 1px;
+            padding: 5px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell {
+            background: #222;
+            border: 1px solid #444;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            overflow: hidden;
+        }
+
+        .cell.filled {
+            background: #4CAF50;
+        }
+
+        .cell.bonus-double-word {
+            background: #FFB6D9;
+        }
+
+        .cell.bonus-triple-word {
+            background: #FF69B4;
+        }
+
+        .cell.bonus-double-letter {
+            background: #ADD8E6;
+        }
+
+        .cell.bonus-triple-letter {
+            background: #0099FF;
+        }
+
+        .cell-letter {
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            z-index: 2;
+        }
+
+        .cell.bonus-double-word .cell-letter,
+        .cell.bonus-triple-word .cell-letter {
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell.bonus-double-letter .cell-letter,
+        .cell.bonus-triple-letter .cell-letter {
+            color: #000;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .bonus-label {
+            position: absolute;
+            font-size: 8px;
+            color: rgba(0, 0, 0, 0.4);
+            top: 1px;
+            left: 1px;
+            z-index: 1;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 250px;
+        }
+
+        .info-panel {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .next-piece {
+            background: #222;
+            border: 2px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(4, 25px);
+            grid-template-rows: repeat(4, 25px);
+            gap: 1px;
+        }
+
+        .next-piece .cell {
+            width: 25px;
+            height: 25px;
+            font-size: 12px;
+        }
+
+        .word-input {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .word-input input {
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .word-input input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+        }
+
+        .word-input button {
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .word-input button:hover {
+            background: #764ba2;
+        }
+
+        .word-input button:active {
+            transform: scale(0.98);
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 20px;
+        }
+
+        .message.success {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .message.error {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        .message.info {
+            background: #bbdefb;
+            color: #1565c0;
+        }
+
+        .controls {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .controls h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .controls p {
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .game-over.show {
+            display: block;
+        }
+
+        .game-over h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .game-over p {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .game-over button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .game-over button:hover {
+            background: #764ba2;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        .last-words {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .last-words .word-item {
+            padding: 5px;
+            margin: 3px 0;
+            background: #e8f5e9;
+            border-left: 3px solid #4CAF50;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-section">
+            <h1 style="text-align: center; color: #667eea; margin-bottom: 10px;">Tetroggleable</h1>
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="info-panel">
+                <h3>Score</h3>
+                <div class="score" id="score">0</div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Next Piece</h3>
+                <div class="next-piece" id="nextPiece"></div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Word Input</h3>
+                <div class="word-input">
+                    <input type="text" id="wordInput" placeholder="Type a word..." maxlength="20">
+                    <button onclick="game.submitWord()">Submit Word</button>
+                    <div class="message" id="message"></div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Last Words</h3>
+                <div class="last-words" id="lastWords"></div>
+            </div>
+
+            <div class="controls">
+                <h4>Controls</h4>
+                <p><strong>← →</strong> Move</p>
+                <p><strong>↑</strong> Rotate</p>
+                <p><strong>Space</strong> Drop</p>
+                <p><strong>Type</strong> Word</p>
+                <p><strong>Enter</strong> Submit</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="game-over" id="gameOverModal">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // Scrabble letter values
+        const LETTER_VALUES = {
+            'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4, 'I': 1, 'J': 8,
+            'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1, 'S': 1, 'T': 1,
+            'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10
+        };
+
+        // Tetris pieces (Tetrominos)
+        const PIECES = [
+            { name: 'I', shape: [[1, 1, 1, 1]], color: '#00F0F0' },
+            { name: 'O', shape: [[1, 1], [1, 1]], color: '#F0F000' },
+            { name: 'T', shape: [[0, 1, 0], [1, 1, 1]], color: '#A000F0' },
+            { name: 'S', shape: [[0, 1, 1], [1, 1, 0]], color: '#00F000' },
+            { name: 'Z', shape: [[1, 1, 0], [0, 1, 1]], color: '#F00000' },
+            { name: 'J', shape: [[1, 0, 0], [1, 1, 1]], color: '#0000F0' },
+            { name: 'L', shape: [[0, 0, 1], [1, 1, 1]], color: '#F0A500' }
+        ];
+
+        const BOARD_WIDTH = 10;
+        const BOARD_HEIGHT = 20;
+        const BONUS_CHANCE = 0.15; // 15% chance for bonus tiles
+
+        class Game {
+            constructor() {
+                this.board = Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(null));
+                this.score = 0;
+                this.gameOver = false;
+                this.currentPiece = null;
+                this.nextPiece = null;
+                this.currentX = 0;
+                this.currentY = 0;
+                this.wordHistory = [];
+                this.dictionary = new Set();
+                this.gameSpeed = 1000; // milliseconds
+                this.lastDropTime = Date.now();
+
+                this.initializeDictionary();
+                this.spawnPiece();
+                this.render();
+                this.setupEventListeners();
+                this.gameLoop();
+            }
+
+            initializeDictionary() {
+                // Common English words dictionary (expanded set)
+                const words = [
+                    'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER',
+                    'WAS', 'ONE', 'OUR', 'OUT', 'DAY', 'GET', 'HAS', 'HIM', 'HIS', 'HOW',
+                    'ITS', 'MAY', 'NEW', 'NOW', 'OLD', 'SEE', 'TWO', 'WAY', 'WHO', 'BOY',
+                    'DID', 'ITS', 'LET', 'PUT', 'SAY', 'SHE', 'TOO', 'USE', 'CAT', 'DOG',
+                    'BAT', 'RAT', 'HAT', 'MAT', 'SAT', 'FAT', 'PAT', 'TAT', 'VAT', 'BIT',
+                    'HIT', 'SIT', 'FIT', 'PIT', 'WIT', 'LIT', 'KIT', 'BED', 'RED', 'LED',
+                    'FED', 'WED', 'BIG', 'DIG', 'FIG', 'GIG', 'JIG', 'PIG', 'RIG', 'WIG',
+                    'BAG', 'GAG', 'JAG', 'LAG', 'NAG', 'RAG', 'SAG', 'TAG', 'WAG', 'BUS',
+                    'GAS', 'HAS', 'WAS', 'BOX', 'FOX', 'POX', 'SOX', 'BUG', 'DUG', 'HUG',
+                    'JUG', 'MUG', 'PUG', 'RUG', 'TUG', 'BUN', 'DUN', 'FUN', 'GUN', 'NUN',
+                    'PUN', 'RUN', 'SUN', 'BUS', 'CUP', 'PUP', 'SUP', 'CUT', 'GUT', 'HUT',
+                    'JUT', 'NUT', 'PUT', 'RUT', 'TUT', 'BUY', 'GUY', 'ACE', 'AGE', 'ALE',
+                    'APE', 'ARE', 'ATE', 'AWE', 'AXE', 'AYE', 'BEE', 'EYE', 'ICE', 'OWE',
+                    'OWL', 'OWN', 'PIE', 'TIE', 'TOE', 'TOY', 'TRY', 'VIA', 'VIE', 'ZOO',
+                    'ABLE', 'BACK', 'BALL', 'BAND', 'BANK', 'BASE', 'BATH', 'BEAN', 'BEAR',
+                    'BEAT', 'BEEN', 'BELL', 'BELT', 'BEND', 'BENT', 'BEST', 'BIKE', 'BILL',
+                    'BIRD', 'BITE', 'BLOW', 'BLUE', 'BOAT', 'BODY', 'BOIL', 'BOLD', 'BOLT',
+                    'BOMB', 'BOND', 'BONE', 'BOOK', 'BOOM', 'BOOT', 'BORE', 'BORN', 'BOTH',
+                    'BOWL', 'BULK', 'BURN', 'BUSH', 'BUSY', 'CAGE', 'CAKE', 'CALL', 'CALM',
+                    'CAME', 'CAMP', 'CANE', 'CANT', 'CAPE', 'CARD', 'CARE', 'CART', 'CASE',
+                    'CASH', 'CAST', 'CAVE', 'CELL', 'CENT', 'CHAT', 'CHIN', 'CHIP', 'CHOP',
+                    'CITY', 'CLAP', 'CLAY', 'CLIP', 'CLUB', 'COAL', 'COAT', 'CODE', 'COIL',
+                    'COIN', 'COLD', 'COME', 'CONE', 'COOK', 'COOL', 'COPE', 'COPY', 'CORD',
+                    'CORE', 'CORK', 'CORN', 'COST', 'CRAB', 'CREW', 'CROP', 'CROW', 'CUBE',
+                    'CURE', 'CURL', 'CUTE', 'DAMP', 'DARE', 'DARK', 'DASH', 'DATA', 'DATE',
+                    'DAWN', 'DEAD', 'DEAF', 'DEAL', 'DEAN', 'DEAR', 'DECK', 'DEEP', 'DEER',
+                    'DEMO', 'DENT', 'DENY', 'DESK', 'DIAL', 'DICE', 'DIET', 'DIME', 'DINE',
+                    'DIRE', 'DIRT', 'DISC', 'DISH', 'DISK', 'DIVE', 'DOCK', 'DOLL', 'DOME',
+                    'DONE', 'DOOR', 'DOSE', 'DOVE', 'DOWN', 'DOZE', 'DRAG', 'DRAW', 'DREW',
+                    'DRIP', 'DROP', 'DRUG', 'DRUM', 'DUAL', 'DUCK', 'DULL', 'DUMB', 'DUMP',
+                    'DUNE', 'DUNK', 'DUSK', 'DUST', 'DUTY', 'DYED', 'EACH', 'EARL', 'EARN',
+                    'EASE', 'EAST', 'EASY', 'ECHO', 'EDGE', 'EDIT', 'ELSE', 'EMIT', 'EPIC',
+                    'EVEN', 'EVER', 'EVIL', 'EXAM', 'EXIT', 'FACE', 'FACT', 'FADE', 'FAIL',
+                    'FAIR', 'FAKE', 'FALL', 'FAME', 'FARE', 'FARM', 'FAST', 'FATE', 'FEAR',
+                    'FEAT', 'FEED', 'FEEL', 'FEET', 'FELL', 'FELT', 'FERN', 'FILE', 'FILL',
+                    'FILM', 'FIND', 'FINE', 'FIRE', 'FIRM', 'FISH', 'FIST', 'FIVE', 'FLAG',
+                    'FLAP', 'FLAT', 'FLAW', 'FLED', 'FLEE', 'FLEW', 'FLIP', 'FLOW', 'FOAM',
+                    'FOLD', 'FOLK', 'FOND', 'FONT', 'FOOD', 'FOOL', 'FOOT', 'FORD', 'FORK',
+                    'FORM', 'FORT', 'FOUL', 'FOUR', 'FREE', 'FROG', 'FROM', 'FUEL', 'FULL',
+                    'FUME', 'FUND', 'FUNK', 'FURY', 'FUSE', 'FUSS', 'GAIN', 'GAME', 'GANG',
+                    'GATE', 'GAVE', 'GEAR', 'GENE', 'GIFT', 'GIRL', 'GIVE', 'GLAD', 'GLEN',
+                    'GLOW', 'GLUE', 'GOAL', 'GOAT', 'GOLD', 'GOLF', 'GONE', 'GOOD', 'GOWN',
+                    'GRAB', 'GRAD', 'GRAM', 'GRAY', 'GREW', 'GREY', 'GRID', 'GRIM', 'GRIN',
+                    'GRIP', 'GRIT', 'GROW', 'GULF', 'GUST', 'HACK', 'HAIL', 'HAIR', 'HALF',
+                    'HALL', 'HALT', 'HAND', 'HANG', 'HARD', 'HARE', 'HARM', 'HARP', 'HASH',
+                    'HATE', 'HAUL', 'HAVE', 'HAWK', 'HAZE', 'HAZY', 'HEAD', 'HEAL', 'HEAP',
+                    'HEAR', 'HEAT', 'HEED', 'HEEL', 'HEIR', 'HELD', 'HELL', 'HELM', 'HELP',
+                    'HERB', 'HERD', 'HERE', 'HERO', 'HIDE', 'HIGH', 'HIKE', 'HILL', 'HILT',
+                    'HIND', 'HINT', 'HIRE', 'HIVE', 'HOAX', 'HOLD', 'HOLE', 'HOLY', 'HOME',
+                    'HOOD', 'HOOF', 'HOOK', 'HOOP', 'HOPE', 'HORN', 'HOSE', 'HOST', 'HOUR',
+                    'HOWL', 'HUGE', 'HULL', 'HUMP', 'HUNG', 'HUNK', 'HUNT', 'HURL', 'HURT',
+                    'HUSH', 'ICON', 'IDEA', 'IDLE', 'INCH', 'INTO', 'IRON', 'ISLE', 'ITEM',
+                    'JAIL', 'JAZZ', 'JEAN', 'JERK', 'JEST', 'JOKE', 'JOLT', 'JUMP', 'JUNE',
+                    'JUNK', 'JURY', 'JUST', 'KEEN', 'KEEP', 'KEPT', 'KICK', 'KILL', 'KIND',
+                    'KING', 'KISS', 'KITE', 'KNEE', 'KNEW', 'KNIT', 'KNOB', 'KNOT', 'KNOW',
+                    'LACE', 'LACK', 'LADY', 'LAID', 'LAKE', 'LAMB', 'LAME', 'LAMP', 'LAND',
+                    'LANE', 'LARD', 'LARK', 'LASH', 'LAST', 'LATE', 'LAUD', 'LAVA', 'LAWN',
+                    'LAZY', 'LEAD', 'LEAF', 'LEAK', 'LEAN', 'LEAP', 'LEFT', 'LEND', 'LENS',
+                    'LENT', 'LESS', 'LIAR', 'LICE', 'LICK', 'LIFE', 'LIFT', 'LIKE', 'LIMB',
+                    'LIME', 'LIMP', 'LINE', 'LINK', 'LINT', 'LION', 'LISP', 'LIST', 'LIVE',
+                    'LOAD', 'LOAF', 'LOAN', 'LOCK', 'LOFT', 'LONE', 'LONG', 'LOOK', 'LOOM',
+                    'LOOP', 'LOOT', 'LORD', 'LORE', 'LOSE', 'LOSS', 'LOST', 'LOUD', 'LOUT',
+                    'LOVE', 'LUCK', 'LUMP', 'LUNG', 'LURE', 'LURK', 'LUSH', 'LUST', 'LUTE',
+                    'MADE', 'MAID', 'MAIL', 'MAIN', 'MAKE', 'MALE', 'MALL', 'MALT', 'MANE',
+                    'MANY', 'MARE', 'MARK', 'MARS', 'MASK', 'MASS', 'MAST', 'MATE', 'MATH',
+                    'MAZE', 'MEAD', 'MEAL', 'MEAN', 'MEAT', 'MEEK', 'MEET', 'MELT', 'MEMO',
+                    'MEND', 'MENU', 'MERE', 'MESH', 'MESS', 'MICE', 'MILD', 'MILE', 'MILK',
+                    'MILL', 'MIME', 'MIND', 'MINE', 'MINT', 'MISS', 'MIST', 'MITE', 'MITT',
+                    'MOAN', 'MOCK', 'MODE', 'MOLD', 'MOLE', 'MOLT', 'MONK', 'MOOD', 'MOON',
+                    'MOOR', 'MOOT', 'MORE', 'MORN', 'MOSS', 'MOST', 'MOTH', 'MOVE', 'MUCH',
+                    'MULE', 'MUSE', 'MUSH', 'MUST', 'MUTE', 'MYTH', 'NAIL', 'NAME', 'NAPE',
+                    'NAVY', 'NEAR', 'NEAT', 'NECK', 'NEED', 'NEON', 'NEST', 'NEWS', 'NEWT',
+                    'NEXT', 'NICE', 'NICK', 'NINE', 'NODE', 'NONE', 'NOON', 'NORM', 'NOSE',
+                    'NOTE', 'NOUN', 'NUDE', 'NULL', 'NUMB', 'OATH', 'OBEY', 'ODOR', 'OKAY',
+                    'OMEN', 'OMIT', 'ONCE', 'ONLY', 'ONTO', 'OOZE', 'OPAL', 'OPEN', 'ORAL',
+                    'ORCA', 'OVEN', 'OVER', 'PACE', 'PACK', 'PAGE', 'PAID', 'PAIL', 'PAIN',
+                    'PAIR', 'PALE', 'PALM', 'PANE', 'PANG', 'PANT', 'PARK', 'PART', 'PASS',
+                    'PAST', 'PATH', 'PAVE', 'PAWN', 'PEAK', 'PEAL', 'PEAR', 'PEAS', 'PEAT',
+                    'PECK', 'PEEL', 'PEER', 'PELT', 'PEND', 'PENT', 'PEST', 'PICK', 'PIER',
+                    'PIKE', 'PILE', 'PILL', 'PINE', 'PING', 'PINK', 'PINT', 'PIPE', 'PITY',
+                    'PLAN', 'PLAY', 'PLEA', 'PLED', 'PLOD', 'PLOP', 'PLOT', 'PLOW', 'PLOY',
+                    'PLUG', 'PLUM', 'PLUS', 'POEM', 'POET', 'POKE', 'POLE', 'POLL', 'POLO',
+                    'POND', 'PONY', 'POOL', 'POOR', 'POPE', 'PORK', 'PORT', 'POSE', 'POST',
+                    'POUR', 'POUT', 'PRAY', 'PREP', 'PREY', 'PRIM', 'PROD', 'PROM', 'PROP',
+                    'PROW', 'PRUNE', 'PULL', 'PULP', 'PUMP', 'PUNK', 'PUNY', 'PURE', 'PURR',
+                    'PUSH', 'QUAD', 'QUAY', 'QUIT', 'QUIZ', 'RACE', 'RACK', 'RAFT', 'RAGE',
+                    'RAID', 'RAIL', 'RAIN', 'RAKE', 'RAMP', 'RANG', 'RANK', 'RANT', 'RARE',
+                    'RASH', 'RASP', 'RATE', 'RAVE', 'RAZE', 'READ', 'REAL', 'REAM', 'REAP',
+                    'REAR', 'REEL', 'REIN', 'RELY', 'REND', 'RENT', 'REST', 'RICE', 'RICH',
+                    'RIDE', 'RIFE', 'RIFT', 'RING', 'RINK', 'RIOT', 'RIPE', 'RISE', 'RISK',
+                    'RITE', 'ROAD', 'ROAM', 'ROAR', 'ROBE', 'ROCK', 'RODE', 'ROLE', 'ROLL',
+                    'ROMP', 'ROOF', 'ROOM', 'ROOT', 'ROPE', 'ROSE', 'ROSY', 'ROTE', 'ROUT',
+                    'ROVE', 'RUDE', 'RUIN', 'RULE', 'RUNG', 'RUNT', 'RUSE', 'RUSH', 'RUST',
+                    'SACK', 'SAFE', 'SAGA', 'SAGE', 'SAID', 'SAIL', 'SAKE', 'SALE', 'SALT',
+                    'SAME', 'SAND', 'SANE', 'SANG', 'SANK', 'SASH', 'SAVE', 'SEAL', 'SEAM',
+                    'SEAR', 'SEAT', 'SECT', 'SEED', 'SEEK', 'SEEM', 'SEEN', 'SELF', 'SELL',
+                    'SEMI', 'SEND', 'SENT', 'SERF', 'SETS', 'SEWN', 'SHAD', 'SHAG', 'SHAM',
+                    'SHED', 'SHIN', 'SHIP', 'SHOE', 'SHOO', 'SHOP', 'SHOT', 'SHOW', 'SHUN',
+                    'SHUT', 'SICK', 'SIDE', 'SIFT', 'SIGH', 'SIGN', 'SILK', 'SILL', 'SILO',
+                    'SILT', 'SING', 'SINK', 'SITE', 'SIZE', 'SKID', 'SKIM', 'SKIN', 'SKIP',
+                    'SLAB', 'SLAG', 'SLAM', 'SLAP', 'SLAT', 'SLAW', 'SLAY', 'SLED', 'SLEW',
+                    'SLID', 'SLIM', 'SLIP', 'SLIT', 'SLOB', 'SLOE', 'SLOG', 'SLOP', 'SLOT',
+                    'SLOW', 'SLUG', 'SLUM', 'SMOG', 'SNAG', 'SNAP', 'SNIP', 'SNOB', 'SNOT',
+                    'SNOW', 'SNUB', 'SNUG', 'SOAK', 'SOAP', 'SOAR', 'SOCK', 'SODA', 'SOFA',
+                    'SOFT', 'SOIL', 'SOLD', 'SOLE', 'SOLO', 'SOME', 'SONG', 'SOON', 'SOOT',
+                    'SORE', 'SORT', 'SOUL', 'SOUP', 'SOUR', 'SPAN', 'SPAR', 'SPEC', 'SPED',
+                    'SPIN', 'SPIT', 'SPOT', 'STAB', 'STAG', 'STAR', 'STAY', 'STEM', 'STEP',
+                    'STEW', 'STIR', 'STOP', 'STUD', 'STUN', 'SUCH', 'SUIT', 'SULK', 'SUMP',
+                    'SUNG', 'SUNK', 'SURE', 'SURF', 'SWAB', 'SWAG', 'SWAM', 'SWAN', 'SWAP',
+                    'SWAY', 'SWIM', 'SWUM', 'TACK', 'TACO', 'TAIL', 'TAKE', 'TALE', 'TALK',
+                    'TALL', 'TAME', 'TANK', 'TAPE', 'TAPS', 'TARE', 'TARN', 'TARP', 'TASK',
+                    'TAUT', 'TAXI', 'TEAM', 'TEAR', 'TEAS', 'TEAT', 'TEEN', 'TELL', 'TEND',
+                    'TENT', 'TERM', 'TEST', 'TEXT', 'THAN', 'THAT', 'THAW', 'THEE', 'THEM',
+                    'THEN', 'THEY', 'THIN', 'THIS', 'THOU', 'THUD', 'THUG', 'THUS', 'TICK',
+                    'TIDE', 'TIDY', 'TIED', 'TIER', 'TIES', 'TIFF', 'TILE', 'TILL', 'TILT',
+                    'TIME', 'TINE', 'TINT', 'TINY', 'TIPS', 'TIRE', 'TOAD', 'TOES', 'TOFU',
+                    'TOGA', 'TOIL', 'TOLD', 'TOLL', 'TOMB', 'TOME', 'TONE', 'TONG', 'TOOK',
+                    'TOOL', 'TOOT', 'TOPS', 'TORE', 'TORN', 'TORT', 'TOSS', 'TOTE', 'TOUR',
+                    'TOUT', 'TOWN', 'TOYS', 'TRAP', 'TRAY', 'TREE', 'TREK', 'TRIM', 'TRIO',
+                    'TRIP', 'TROD', 'TROT', 'TRUE', 'TUBA', 'TUBE', 'TUCK', 'TUFT', 'TUNA',
+                    'TUNE', 'TURF', 'TURN', 'TUSK', 'TUTU', 'TWIG', 'TWIN', 'TWIT', 'TYPE',
+                    'UGLY', 'UNDO', 'UNIT', 'UNTO', 'UPON', 'URGE', 'USED', 'USER', 'VAIN',
+                    'VALE', 'VANE', 'VARY', 'VASE', 'VAST', 'VEAL', 'VEIL', 'VEIN', 'VEND',
+                    'VENT', 'VERB', 'VERY', 'VEST', 'VETO', 'VICE', 'VIEW', 'VILE', 'VINE',
+                    'VOID', 'VOLT', 'VOTE', 'VOWS', 'WADE', 'WAGE', 'WAIL', 'WAIT', 'WAKE',
+                    'WALK', 'WALL', 'WAND', 'WANT', 'WARD', 'WARE', 'WARM', 'WARN', 'WARP',
+                    'WARS', 'WART', 'WARY', 'WASH', 'WASP', 'WAVE', 'WAVY', 'WAXY', 'WEAK',
+                    'WEAL', 'WEAR', 'WEARY', 'WEAVE', 'WEBS', 'WEDS', 'WEED', 'WEEK', 'WEEP',
+                    'WEIR', 'WELD', 'WELL', 'WELT', 'WENT', 'WEPT', 'WERE', 'WEST', 'WETS',
+                    'WHAT', 'WHEN', 'WHET', 'WHEY', 'WHIM', 'WHIP', 'WHIR', 'WHIT', 'WHIZ',
+                    'WHOM', 'WICK', 'WIDE', 'WIFE', 'WILD', 'WILE', 'WILL', 'WILT', 'WIND',
+                    'WINE', 'WING', 'WINK', 'WIPE', 'WIRE', 'WIRY', 'WISE', 'WISH', 'WISP',
+                    'WITH', 'WOKE', 'WOLF', 'WOMB', 'WONT', 'WOOD', 'WOOL', 'WORD', 'WORE',
+                    'WORK', 'WORM', 'WORN', 'WRAP', 'WREN', 'WRIT', 'YANK', 'YARD', 'YARN',
+                    'YAWN', 'YEAR', 'YELL', 'YELP', 'YOKE', 'YOLK', 'YOUR', 'YOWL', 'YUAN',
+                    'YUCK', 'YULE', 'ZEAL', 'ZERO', 'ZEST', 'ZINC', 'ZONE', 'ZOOM'
+                ];
+                words.forEach(word => this.dictionary.add(word));
+            }
+
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+                document.getElementById('wordInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.submitWord();
+                    }
+                });
+            }
+
+            handleKeyPress(e) {
+                if (this.gameOver) return;
+
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        this.movePiece(-1, 0);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        this.movePiece(1, 0);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        this.rotatePiece();
+                        break;
+                    case ' ':
+                        e.preventDefault();
+                        this.dropPiece();
+                        break;
+                }
+            }
+
+            spawnPiece() {
+                if (this.nextPiece === null) {
+                    this.nextPiece = this.getRandomPiece();
+                }
+                this.currentPiece = this.nextPiece;
+                this.nextPiece = this.getRandomPiece();
+                this.currentX = Math.floor(BOARD_WIDTH / 2) - 1;
+                this.currentY = 0;
+
+                // Add letters to the piece
+                this.addLettersToPiece(this.currentPiece);
+
+                if (this.collides(this.currentX, this.currentY, this.currentPiece.shape)) {
+                    this.endGame();
+                }
+            }
+
+            getRandomPiece() {
+                const piece = JSON.parse(JSON.stringify(PIECES[Math.floor(Math.random() * PIECES.length)]));
+                return piece;
+            }
+
+            addLettersToPiece(piece) {
+                piece.letters = [];
+                for (let row of piece.shape) {
+                    let letterRow = [];
+                    for (let cell of row) {
+                        if (cell === 1) {
+                            const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                            const bonus = Math.random() < BONUS_CHANCE ? this.getRandomBonus() : null;
+                            letterRow.push({ letter, bonus });
+                        } else {
+                            letterRow.push(null);
+                        }
+                    }
+                    piece.letters.push(letterRow);
+                }
+            }
+
+            getRandomBonus() {
+                const bonuses = ['double-word', 'triple-word', 'double-letter', 'triple-letter'];
+                return bonuses[Math.floor(Math.random() * bonuses.length)];
+            }
+
+            movePiece(dx, dy) {
+                if (!this.collides(this.currentX + dx, this.currentY + dy, this.currentPiece.shape)) {
+                    this.currentX += dx;
+                    this.currentY += dy;
+                    this.render();
+                }
+            }
+
+            rotatePiece() {
+                const rotated = this.rotateCW(this.currentPiece.shape);
+                const rotatedLetters = this.rotateCW(this.currentPiece.letters);
+                if (!this.collides(this.currentX, this.currentY, rotated)) {
+                    this.currentPiece.shape = rotated;
+                    this.currentPiece.letters = rotatedLetters;
+                    this.render();
+                }
+            }
+
+            rotateCW(matrix) {
+                const n = matrix.length;
+                const m = matrix[0].length;
+                const rotated = Array(m).fill(null).map(() => Array(n).fill(null));
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < m; j++) {
+                        rotated[j][n - 1 - i] = matrix[i][j];
+                    }
+                }
+                return rotated;
+            }
+
+            dropPiece() {
+                while (!this.collides(this.currentX, this.currentY + 1, this.currentPiece.shape)) {
+                    this.currentY++;
+                }
+                this.lockPiece();
+            }
+
+            collides(x, y, shape) {
+                for (let row = 0; row < shape.length; row++) {
+                    for (let col = 0; col < shape[row].length; col++) {
+                        if (shape[row][col] === 1) {
+                            const boardX = x + col;
+                            const boardY = y + row;
+                            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+                                return true;
+                            }
+                            if (boardY >= 0 && this.board[boardY][boardX] !== null) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            lockPiece() {
+                for (let row = 0; row < this.currentPiece.shape.length; row++) {
+                    for (let col = 0; col < this.currentPiece.shape[row].length; col++) {
+                        if (this.currentPiece.shape[row][col] === 1) {
+                            const boardX = this.currentX + col;
+                            const boardY = this.currentY + row;
+                            if (boardY >= 0) {
+                                this.board[boardY][boardX] = {
+                                    letter: this.currentPiece.letters[row][col].letter,
+                                    bonus: this.currentPiece.letters[row][col].bonus,
+                                    color: this.currentPiece.color
+                                };
+                            }
+                        }
+                    }
+                }
+                this.clearLines();
+                this.spawnPiece();
+                this.render();
+            }
+
+            clearLines() {
+                let linesCleared = 0;
+                for (let row = BOARD_HEIGHT - 1; row >= 0; row--) {
+                    if (this.board[row].every(cell => cell !== null)) {
+                        this.board.splice(row, 1);
+                        this.board.unshift(Array(BOARD_WIDTH).fill(null));
+                        linesCleared++;
+                        row++;
+                    }
+                }
+                if (linesCleared > 0) {
+                    this.score += linesCleared * 10;
+                }
+            }
+
+            submitWord() {
+                const input = document.getElementById('wordInput');
+                const word = input.value.toUpperCase().trim();
+                input.value = '';
+
+                if (!word) {
+                    this.showMessage('Please enter a word', 'error');
+                    return;
+                }
+
+                if (!this.dictionary.has(word)) {
+                    this.showMessage(`"${word}" is not a valid word`, 'error');
+                    return;
+                }
+
+                const matches = this.findWordInBoard(word);
+                if (matches.length === 0) {
+                    this.showMessage(`"${word}" not found on board`, 'error');
+                    return;
+                }
+
+                // Calculate score
+                let wordScore = 0;
+                let wordMultiplier = 1;
+                let hasDoubleWord = false;
+                let hasTripleWord = false;
+
+                for (let pos of matches) {
+                    const cell = this.board[pos.row][pos.col];
+                    const letterValue = LETTER_VALUES[cell.letter] || 0;
+                    let letterScore = letterValue;
+
+                    if (cell.bonus === 'double-letter') {
+                        letterScore *= 2;
+                    } else if (cell.bonus === 'triple-letter') {
+                        letterScore *= 3;
+                    } else if (cell.bonus === 'double-word') {
+                        hasDoubleWord = true;
+                    } else if (cell.bonus === 'triple-word') {
+                        hasTripleWord = true;
+                    }
+
+                    wordScore += letterScore;
+                }
+
+                if (hasTripleWord) {
+                    wordMultiplier = 3;
+                } else if (hasDoubleWord) {
+                    wordMultiplier = 2;
+                }
+
+                // Double points for 7+ letter words
+                if (word.length >= 7) {
+                    wordMultiplier *= 2;
+                }
+
+                wordScore *= wordMultiplier;
+
+                // Remove matched blocks
+                for (let pos of matches) {
+                    this.board[pos.row][pos.col] = null;
+                }
+
+                // Apply gravity
+                this.applyGravity();
+
+                this.score += wordScore;
+                this.wordHistory.unshift({ word, score: wordScore });
+                if (this.wordHistory.length > 10) {
+                    this.wordHistory.pop();
+                }
+
+                this.showMessage(`"${word}" +${wordScore} points!`, 'success');
+                this.render();
+            }
+
+            findWordInBoard(word) {
+                const matches = [];
+                const visited = new Set();
+
+                // Try to find the word reading left-to-right and top-to-bottom
+                for (let row = 0; row < BOARD_HEIGHT; row++) {
+                    for (let col = 0; col < BOARD_WIDTH; col++) {
+                        if (this.board[row][col] && this.board[row][col].letter === word[0]) {
+                            // Try horizontal
+                            let horizontalMatches = this.tryMatchHorizontal(word, row, col);
+                            if (horizontalMatches.length === word.length) {
+                                return horizontalMatches;
+                            }
+
+                            // Try vertical
+                            let verticalMatches = this.tryMatchVertical(word, row, col);
+                            if (verticalMatches.length === word.length) {
+                                return verticalMatches;
+                            }
+                        }
+                    }
+                }
+
+                return [];
+            }
+
+            tryMatchHorizontal(word, row, startCol) {
+                const matches = [];
+                for (let i = 0; i < word.length; i++) {
+                    const col = startCol + i;
+                    if (col >= BOARD_WIDTH || !this.board[row][col] || this.board[row][col].letter !== word[i]) {
+                        return [];
+                    }
+                    matches.push({ row, col });
+                }
+                return matches;
+            }
+
+            tryMatchVertical(word, startRow, col) {
+                const matches = [];
+                for (let i = 0; i < word.length; i++) {
+                    const row = startRow + i;
+                    if (row >= BOARD_HEIGHT || !this.board[row][col] || this.board[row][col].letter !== word[i]) {
+                        return [];
+                    }
+                    matches.push({ row, col });
+                }
+                return matches;
+            }
+
+            applyGravity() {
+                for (let col = 0; col < BOARD_WIDTH; col++) {
+                    let writePos = BOARD_HEIGHT - 1;
+                    for (let row = BOARD_HEIGHT - 1; row >= 0; row--) {
+                        if (this.board[row][col] !== null) {
+                            this.board[writePos][col] = this.board[row][col];
+                            if (writePos !== row) {
+                                this.board[row][col] = null;
+                            }
+                            writePos--;
+                        }
+                    }
+                }
+            }
+
+            showMessage(text, type) {
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = text;
+                messageEl.className = `message ${type}`;
+                setTimeout(() => {
+                    messageEl.textContent = '';
+                    messageEl.className = 'message';
+                }, 3000);
+            }
+
+            gameLoop() {
+                if (!this.gameOver) {
+                    const now = Date.now();
+                    if (now - this.lastDropTime > this.gameSpeed) {
+                        if (!this.collides(this.currentX, this.currentY + 1, this.currentPiece.shape)) {
+                            this.currentY++;
+                        } else {
+                            this.lockPiece();
+                        }
+                        this.lastDropTime = now;
+                        this.render();
+                    }
+                    requestAnimationFrame(() => this.gameLoop());
+                }
+            }
+
+            endGame() {
+                this.gameOver = true;
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('gameOverModal').classList.add('show');
+                document.getElementById('overlay').classList.add('show');
+            }
+
+            render() {
+                this.renderBoard();
+                this.renderNextPiece();
+                this.renderScore();
+                this.renderWordHistory();
+            }
+
+            renderBoard() {
+                const boardEl = document.getElementById('gameBoard');
+                boardEl.innerHTML = '';
+
+                // Create a copy of the board with the current piece
+                const displayBoard = JSON.parse(JSON.stringify(this.board));
+
+                // Add current piece to display
+                for (let row = 0; row < this.currentPiece.shape.length; row++) {
+                    for (let col = 0; col < this.currentPiece.shape[row].length; col++) {
+                        if (this.currentPiece.shape[row][col] === 1) {
+                            const boardY = this.currentY + row;
+                            const boardX = this.currentX + col;
+                            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                                displayBoard[boardY][boardX] = {
+                                    letter: this.currentPiece.letters[row][col].letter,
+                                    bonus: this.currentPiece.letters[row][col].bonus,
+                                    color: this.currentPiece.color,
+                                    isActive: true
+                                };
+                            }
+                        }
+                    }
+                }
+
+                // Render all cells
+                for (let row = 0; row < BOARD_HEIGHT; row++) {
+                    for (let col = 0; col < BOARD_WIDTH; col++) {
+                        const cell = displayBoard[row][col];
+                        const cellEl = document.createElement('div');
+                        cellEl.className = 'cell';
+
+                        if (cell) {
+                            cellEl.classList.add('filled');
+                            if (cell.bonus) {
+                                cellEl.classList.add(`bonus-${cell.bonus}`);
+                                const bonusLabel = document.createElement('div');
+                                bonusLabel.className = 'bonus-label';
+                                bonusLabel.textContent = cell.bonus.split('-')[0][0].toUpperCase();
+                                cellEl.appendChild(bonusLabel);
+                            }
+
+                            const letterEl = document.createElement('div');
+                            letterEl.className = 'cell-letter';
+                            letterEl.textContent = cell.letter;
+
+                            // Set text color based on background
+                            if (cell.bonus) {
+                                if (cell.bonus.includes('word')) {
+                                    letterEl.style.color = '#fff';
+                                } else {
+                                    letterEl.style.color = '#000';
+                                }
+                            } else {
+                                letterEl.style.color = '#fff';
+                            }
+
+                            cellEl.appendChild(letterEl);
+                        }
+
+                        boardEl.appendChild(cellEl);
+                    }
+                }
+            }
+
+            renderNextPiece() {
+                const nextEl = document.getElementById('nextPiece');
+                nextEl.innerHTML = '';
+
+                for (let row = 0; row < 4; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const cellEl = document.createElement('div');
+                        cellEl.className = 'cell';
+
+                        if (row < this.nextPiece.shape.length && col < this.nextPiece.shape[row].length) {
+                            if (this.nextPiece.shape[row][col] === 1) {
+                                cellEl.classList.add('filled');
+                                const letterEl = document.createElement('div');
+                                letterEl.className = 'cell-letter';
+                                letterEl.textContent = this.nextPiece.letters[row][col].letter;
+                                cellEl.appendChild(letterEl);
+                            }
+                        }
+
+                        nextEl.appendChild(cellEl);
+                    }
+                }
+            }
+
+            renderScore() {
+                document.getElementById('score').textContent = this.score;
+            }
+
+            renderWordHistory() {
+                const historyEl = document.getElementById('lastWords');
+                historyEl.innerHTML = '';
+                for (let item of this.wordHistory) {
+                    const wordEl = document.createElement('div');
+                    wordEl.className = 'word-item';
+                    wordEl.textContent = `${item.word} +${item.score}`;
+                    historyEl.appendChild(wordEl);
+                }
+            }
+        }
+
+        // Start the game
+        const game = new Game();
+    </script>
+</body>
+</html>
