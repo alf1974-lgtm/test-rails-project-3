@@ -1,0 +1,5 @@
+#!/usr/bin/env rails
+# This command will automatically be run when you run "rails" with Rails gems installed from the gems section of this Gemfile.
+
+APP_PATH = File.expand_path("../config/application", __dir__)
+require "rails/commands"
