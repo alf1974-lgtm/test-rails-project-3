@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetroggleable - Tetris + Boggle + Scrabble</title>
+    
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/board.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/word-input.css">
+    <link rel="stylesheet" href="css/controls.css">
+    <link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game-section">
+            <h1>Tetroggleable</h1>
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="info-panel">
+                <h3>Score</h3>
+                <div class="score" id="score">0</div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Next Piece</h3>
+                <div class="next-piece" id="nextPiece"></div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Word Input</h3>
+                <div class="word-input">
+                    <input type="text" id="wordInput" placeholder="Type a word..." maxlength="20">
+                    <button onclick="game.submitWord()">Submit Word</button>
+                    <div class="message" id="message"></div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Last Words</h3>
+                <div class="last-words" id="lastWords"></div>
+            </div>
+
+            <div class="controls">
+                <h4>Controls</h4>
+                <p><strong>← →</strong> Move</p>
+                <p><strong>↑</strong> Rotate</p>
+                <p><strong>Space</strong> Drop</p>
+                <p><strong>Type</strong> Word</p>
+                <p><strong>Enter</strong> Submit</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="game-over" id="gameOverModal">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="js/constants.js"></script>
+    <script src="js/dictionary.js"></script>
+    <script src="js/piece-manager.js"></script>
+    <script src="js/board-physics.js"></script>
+    <script src="js/word-matcher.js"></script>
+    <script src="js/ui-renderer.js"></script>
+    <script src="js/input-handler.js"></script>
+    <script src="js/game.js"></script>
+    
+    <!-- Initialize Game -->
+    <script>
+        const game = new Game();
+    </script>
+</body>
+</html>
