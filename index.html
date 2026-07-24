@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tetroggleable</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 16px 8px;
+    user-select: none;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #e94560, #0f3460, #533483);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 0.78rem;
+    color: #888;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────── */
+  .game-wrapper {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ── Left panel ───────────────────────────────────────────────── */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 160px;
+  }
+
+  .panel-box {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .panel-box h3 {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .score-val {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e94560;
+  }
+
+  .level-val, .lines-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #a8dadc;
+  }
+
+  /* Next piece preview */
+  #next-canvas {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ── Main board ───────────────────────────────────────────────── */
+  #board-canvas {
+    border: 2px solid #0f3460;
+    border-radius: 4px;
+    display: block;
+    box-shadow: 0 0 30px rgba(233,69,96,0.15);
+  }
+
+  /* ── Right panel ──────────────────────────────────────────────── */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 200px;
+  }
+
+  /* Word input area */
+  .word-area {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .word-area h3 {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  #word-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #e2e2e2;
+    min-height: 2rem;
+    background: #0d1b2a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    text-align: center;
+    border: 1px solid #1a3a5c;
+  }
+
+  #word-feedback {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    min-height: 1.1rem;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .feedback-ok   { color: #57cc99; }
+  .feedback-bad  { color: #e94560; }
+  .feedback-info { color: #a8dadc; }
+
+  /* Word history */
+  .history-box {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 10px 12px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .history-box h3 {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .history-entry {
+    font-size: 0.78rem;
+    padding: 2px 0;
+    border-bottom: 1px solid #1a3a5c;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .history-entry .hw { color: #a8dadc; font-weight: 600; }
+  .history-entry .hp { color: #e94560; }
+
+  /* Bonus legend */
+  .legend-box {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .legend-box h3 {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 5px;
+    font-size: 0.72rem;
+    color: #ccc;
+  }
+
+  .legend-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* Controls help */
+  .controls-box {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .controls-box h3 {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .ctrl-row {
+    font-size: 0.72rem;
+    color: #aaa;
+    margin-bottom: 3px;
+  }
+
+  .ctrl-row kbd {
+    background: #0f3460;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.7rem;
+    color: #e0e0e0;
+    border: 1px solid #1a5276;
+  }
+
+  /* ── Overlay screens ──────────────────────────────────────────── */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,20,0.88);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 18px;
+  }
+
+  #overlay h2 {
+    font-size: 2.2rem;
+    letter-spacing: 4px;
+    color: #e94560;
+  }
+
+  #overlay p {
+    color: #aaa;
+    font-size: 0.9rem;
+    text-align: center;
+    max-width: 340px;
+    line-height: 1.6;
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #e94560, #c0392b);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  #final-score {
+    font-size: 1.4rem;
+    color: #a8dadc;
+    font-weight: 700;
+  }
+
+  /* ── Scrollbar styling ────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #0d1b2a; }
+  ::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>TETROGGLEABLE</h1>
+<p class="subtitle">TETRIS · BOGGLE · SCRABBLE</p>
+
+<div class="game-wrapper">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-box">
+      <h3>Score</h3>
+      <div class="score-val" id="score-display">0</div>
+    </div>
+    <div class="panel-box">
+      <h3>Level</h3>
+      <div class="level-val" id="level-display">1</div>
+    </div>
+    <div class="panel-box">
+      <h3>Lines</h3>
+      <div class="lines-val" id="lines-display">0</div>
+    </div>
+    <div class="panel-box">
+      <h3>Next</h3>
+      <canvas id="next-canvas" width="120" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <canvas id="board-canvas" width="300" height="600"></canvas>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="word-area">
+      <h3>Type a Word</h3>
+      <div id="word-display">_</div>
+      <div id="word-feedback" class="feedback-info">Type letters, Enter to submit</div>
+    </div>
+
+    <div class="history-box">
+      <h3>Words Played</h3>
+      <div id="word-history"></div>
+    </div>
+
+    <div class="legend-box">
+      <h3>Bonus Tiles</h3>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#ffb3c6;"></div>
+        <span>Double Word (DW)</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#e05c8a;"></div>
+        <span>Triple Word (TW)</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#90e0ef;"></div>
+        <span>Double Letter (DL)</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch" style="background:#0077b6;"></div>
+        <span>Triple Letter (TL)</span>
+      </div>
+    </div>
+
+    <div class="controls-box">
+      <h3>Controls</h3>
+      <div class="ctrl-row"><kbd>←</kbd><kbd>→</kbd> Move</div>
+      <div class="ctrl-row"><kbd>↑</kbd> Rotate</div>
+      <div class="ctrl-row"><kbd>↓</kbd> Soft drop</div>
+      <div class="ctrl-row"><kbd>Space</kbd> Hard drop</div>
+      <div class="ctrl-row"><kbd>A–Z</kbd> Type word</div>
+      <div class="ctrl-row"><kbd>Enter</kbd> Submit word</div>
+      <div class="ctrl-row"><kbd>Backspace</kbd> Delete letter</div>
+      <div class="ctrl-row"><kbd>Esc</kbd> Clear word</div>
+      <div class="ctrl-row"><kbd>P</kbd> Pause</div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <h2 id="overlay-title">TETROGGLEABLE</h2>
+  <p id="overlay-msg">
+    Move blocks with <strong>← →</strong>, rotate with <strong>↑</strong>,
+    hard-drop with <strong>Space</strong>.<br><br>
+    Type letters to spell words from settled blocks — hit <strong>Enter</strong> to score!<br><br>
+    Bonus tiles multiply your letter &amp; word scores. Words ≥ 7 letters get <strong>2×</strong>!
+  </p>
+  <div id="final-score" style="display:none;"></div>
+  <button class="btn" id="start-btn">START GAME</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  TETROGGLEABLE  –  Tetris + Boggle + Scrabble
+// ═══════════════════════════════════════════════════════════════════
+
+// ── Dictionary (common English words, ~3000 words) ─────────────────
+// We embed a compact word list. Words are checked case-insensitively.
+// This is a curated subset of the ENABLE/TWL word list.
+const DICTIONARY = new Set(`
+aa aah aahed aahing aahs aal aalii aaliis aals aas ab aba abaci aback abaft
+abalone abalones abamp abamps abandon abandoned abandoning abandonment abandons
+abase abased abasement abases abash abashed abashes abashing abasing abate
+abated abatement abates abating abatis abattoir abattoirs abbess abbey abbeys
+abbot abbots abbreviate abbreviated abbreviates abbreviating abbreviation
+abbreviations abdomen abdomens abdominal abduct abducted abducting abduction
+abductions abductor abductors abducts abed aberrant aberration aberrations
+abet abets abetted abetting abhor abhorred abhorrence abhors abide abided
+abides abiding ability abject abjure ablaze able abler ablest ably abnormal
+abnormally aboard abode abodes abolish abolished abolishes abolishing abolition
+abominable abominably abominate abomination abominations abort aborted aborting
+abortion abortions abortive aborts abound abounded abounding abounds about
+above abrasion abrasions abrasive abrasively abrasives abridge abridged
+abridges abridging abroad abrupt abruptly abruptness absence absences absent
+absented absenting absently absentminded absents absolute absolutely absolutes
+absolve absolved absolves absolving absorb absorbed absorbing absorbs
+abstain abstained abstaining abstains abstract abstracted abstracting
+abstraction abstractions abstractly abstracts absurd absurdity absurdly
+abundance abundant abundantly abuse abused abuser abusers abuses abusing
+abusive abusively abyss abyssal abysses ace aced aces ache ached aches
+aching acid acidic acidity acids acknowledge acknowledged acknowledges
+acknowledging acknowledgment acorn acorns acre acres across act acted acting
+action actions active actively activity actor actors actual actually acute
+acutely add added adder adders adding addition additional additionally
+additions address addressed addresses addressing adept adeptly adequate
+adequately adhere adhered adheres adhering adjacent adjective adjectives
+adjust adjusted adjusting adjustment adjustments adjusts admire admired
+admires admiring admission admissions admit admits admitted admitting
+adopt adopted adopting adoption adoptions adopts adore adored adores adoring
+adult adults advance advanced advances advancing advantage advantages
+adventure adventures adventurous adverb adverbs advice advise advised
+adviser advisers advises advising aerial affect affected affecting affection
+affections affects afford afforded affording affords afraid after afternoon
+afternoons again against age aged ages ago agree agreed agreement agreements
+agrees ahead aid aided aiding aids aim aimed aiming aims air aired airing
+airs alarm alarmed alarming alarms alert alerted alerting alerts alike alive
+all allow allowed allowing allows almost alone along already also alter
+altered altering alters always amaze amazed amazes amazing amazingly amber
+amble ambled ambles ambling amend amended amending amendment amendments
+amends amid among amount amounts ample amuse amused amusement amuses amusing
+anchor anchored anchoring anchors ancient anger angered angering angers angle
+angled angles angling angry animal animals ankle ankles announce announced
+announces announcing annoy annoyed annoying annoys answer answered answering
+answers any apart appeal appealed appealing appeals appear appeared appearing
+appears apple apples apply arch arched arches arching area areas argue argued
+argues arguing argument arguments arise arises arising arm armed arming arms
+army around arrange arranged arrangement arrangements arranges arranging
+arrive arrived arrives arriving arrow arrows art arts ask asked asking asks
+asleep assign assigned assigning assignment assignments assigns assist
+assisted assisting assistance assists assume assumed assumes assuming
+assumption assumptions attach attached attaches attaching attack attacked
+attacking attacks attempt attempted attempting attempts attend attended
+attending attention attends attract attracted attracting attraction attracts
+avoid avoided avoiding avoids award awarded awarding awards aware away awful
+awfully awkward awkwardly awkwardness axe axes
+baby back backed backing backs bad badly bag bags bake baked bakes baking
+balance balanced balances balancing ball balls band bands bank banks bare
+barely bark barked barking barks barn barns base based bases basic basically
+basis basket baskets bath baths battle battled battles battling beach beaches
+bear bears beat beaten beating beats beautiful beautifully beauty became
+become becomes becoming bed beds begin begins behind believe believed
+believes believing bell bells belong belonged belonging belongs below belt
+belts bend bends beside best better beyond big bigger biggest bird birds
+bite bites biting black blade blades blame blamed blames blaming blank
+blanks blast blasted blasting blasts blaze blazed blazes blazing blend
+blended blending blends bless blessed blesses blessing blind blindly block
+blocked blocking blocks blood bloom bloomed blooming blooms blow blown blows
+blue blur blurred blurring blurs board boards boat boats body bold boldly
+bone bones book books border borders born bother bothered bothering bothers
+bottle bottles bottom bounce bounced bounces bouncing bound bounds box boxes
+brain brains branch branches brave bravely bravery break breaks breath
+breathe breathed breathes breathing breeze breezes brick bricks bridge
+bridges bright brightly brightness bring brings broad broadly broke broken
+brook brooks brother brothers brown brush brushed brushes brushing build
+builds built burn burned burning burns burst bursts busy
+cage cages call called calling calls calm calmly calmness came camp camps
+card cards care cared careful carefully careless carelessly cares carry
+case cases catch catches cave caves cell cells chain chains chair chairs
+chance chances change changed changes changing charge charged charges
+charging chase chased chases chasing cheap cheaply check checked checking
+checks cheer cheered cheering cheers chest chests child children choice
+choices choose chose circle circles claim claimed claiming claims class
+classes clean cleaned cleaning cleans clear cleared clearing clearly clears
+clever cleverly climb climbed climbing climbs close closed closely closes
+closing cloud clouds cold collect collected collecting collection collections
+color colors come comes coming common compare compared compares comparing
+complete completed completely completes completing concern concerned concerns
+connect connected connecting connection connections connects consider
+considered considers cool copy corner corners correct correctly count
+counted counting counts cover covered covering covers crack cracks crash
+crashed crashes create created creates creating cross crossed crosses
+crossing crowd crowds cry current cut cute
+daily damage damaged damages damaging dance danced dances dancing danger
+dangerous dangerously dark darkness deal deals decide decided decides
+deciding deep deeply defend defended defending defense defends delay
+delayed delaying delays deliver delivered delivering delivery demand
+demanded demanding demands describe described describes describing design
+designed designs desire desired desires destroy destroyed destroying
+destruction detail details develop developed developing development
+difference different differently difficult difficulty direct directly
+discover discovered discovers discovering distance distant divide divided
+divides dividing done double doubt doubted doubting doubts down draw
+drawn draws dream dreams drive driven drives driving drop dropped dropping
+drops during dust
+each early earn earned earning earns earth easy edge edges else empty
+end ends enjoy enjoyed enjoying enjoys enough enter entered entering
+enters equal equally escape escaped escapes even event events every
+exact exactly example examples except exist existed existing exists
+expect expected expecting expects explain explained explains explaining
+explanation explanations extra
+face faces fact facts fail failed failing fails fall falls false family
+far fast faster fastest feel feels fell felt field fields fight fights
+fill filled filling fills final finally find finds fire fires first
+fixed flat flew float floated floating floats floor floors flow flows
+fly focus followed following follows food force forced forces form
+formed forming forms found free freed freedom fresh friend friends
+from front full fully
+game games gave give given gives giving glad glow glowed glowing glows
+goal goals good grab grabbed grabbing grabs grade grades great greatly
+green grew ground group groups grow grown grows guard guided guides
+guess guessed guesses
+half hand hands happen happened happening happens happy hard hardly harm
+harmed harming harms have head heads hear heard hearing heart hearts
+heavy held help helped helping helps here hide high highly hill hills
+hold holds hole holes home hope hoped hopes hoping hour hours huge
+human hunt hunted hunting hunts hurt
+idea ideas imagine imagined imagines important include included includes
+increase increased increases inside instead interest interesting into
+item items
+join joined joining joins jump jumped jumping jumps just
+keep keeps kept kind knew know known knows
+land large last late later laugh laughed laughing laughs lead leads
+learn learned learning learns leave leaves left less level light like
+liked likes likely line lines list listen listened listening lists live
+lived lives living long look looked looking looks lose lost love loved
+loves loving
+made main make makes making many mark marks matter matters mean means
+meet meets mind miss missed missing moment moments more most move moved
+moves moving much must
+name names near need needs never next nice night note notes nothing
+notice noticed notices
+often once open opened opening opens order ordered ordering orders
+other outside over own
+page pages part parts pass passed passes past path paths pay pays
+pick picked picking picks place places plan plans play played playing
+plays point points power powerful pretty pull pulled pulling pulls push
+pushed pushes putting
+quick quickly quiet quietly quite
+race raced races reach reached reaches read reads ready real really
+reason reasons remain remained remaining remains remember remembered
+remembers rest return returned returning returns right rise rises road
+roads rock rocks role roles room rooms round run runs
+safe safely save saved saves say says search searched searches seem
+seems send sends sense set sets share shared shares short show showed
+shown shows side sides sign signs since size sizes skill skills slow
+slowly small smile smiled smiles snow solve solved solves some soon
+sort sorts sound sounds space speak speaks speed spend spent stand
+stands start started starting starts stay stayed staying stays step
+steps still stop stopped stopping stops store stored stores story
+straight strange strength strong strongly study such sure
+take taken takes talk talked talking talks teach teaches tell tells
+than that them then there these they thing things think thinks though
+through time times together told took toward town towns track tracks
+trade travel tried tries true trust try turn turns type types
+under until upon used uses
+very view views voice voices
+wait waited waiting waits walk walked walking walks want wanted wanting
+wants warm watch watched watches water wave waves well went were what
+when where which while wide will wind winds wish wished wishes with
+within without word words work worked working works world would write
+writes written wrote
+year years yet your
+`.trim().split(/\s+/).filter(w => w.length >= 2));
+
+// ── Scrabble letter values ──────────────────────────────────────────
+const LETTER_VALUES = {
+  A:1, E:1, I:1, O:1, U:1, L:1, N:1, S:1, T:1, R:1,
+  D:2, G:2,
+  B:3, C:3, M:3, P:3,
+  F:4, H:4, V:4, W:4, Y:4,
+  K:5,
+  J:8, X:8,
+  Q:10, Z:10
+};
+
+// Scrabble-like letter frequency distribution for random picks
+const LETTER_POOL = (function() {
+  const freq = {
+    A:9, B:2, C:2, D:4, E:12, F:2, G:3, H:2, I:9, J:1, K:1, L:4,
+    M:2, N:6, O:8, P:2, Q:1, R:6, S:4, T:6, U:4, V:2, W:2, X:1, Y:2, Z:1
+  };
+  const pool = [];
+  for (const [l, n] of Object.entries(freq)) {
+    for (let i = 0; i < n; i++) pool.push(l);
+  }
+  return pool;
+})();
+
+function randomLetter() {
+  return LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)];
+}
+
+// ── Bonus tile types ────────────────────────────────────────────────
+const BONUS = {
+  NONE: 'none',
+  DL:   'dl',   // double letter  – light blue
+  TL:   'tl',   // triple letter  – dark blue
+  DW:   'dw',   // double word    – light pink
+  TW:   'tw'    // triple word    – dark pink
+};
+
+const BONUS_COLORS = {
+  [BONUS.NONE]: null,
+  [BONUS.DL]:   '#90e0ef',
+  [BONUS.TL]:   '#0077b6',
+  [BONUS.DW]:   '#ffb3c6',
+  [BONUS.TW]:   '#e05c8a'
+};
+
+// Text color that contrasts well on each bonus background
+const BONUS_TEXT_COLORS = {
+  [BONUS.NONE]: '#ffffff',
+  [BONUS.DL]:   '#003049',
+  [BONUS.TL]:   '#ffffff',
+  [BONUS.DW]:   '#6b0020',
+  [BONUS.TW]:   '#ffffff'
+};
+
+function randomBonus() {
+  const r = Math.random();
+  if (r < 0.04) return BONUS.TW;
+  if (r < 0.10) return BONUS.DW;
+  if (r < 0.18) return BONUS.TL;
+  if (r < 0.30) return BONUS.DL;
+  return BONUS.NONE;
+}
+
+// ── Tetromino definitions ───────────────────────────────────────────
+// Each piece: array of 4 rotations, each rotation is array of [row,col] offsets
+const PIECES = [
+  // I
+  {
+    color: '#00b4d8',
+    rotations: [
+      [[0,0],[0,1],[0,2],[0,3]],
+      [[0,0],[1,0],[2,0],[3,0]],
+      [[0,0],[0,1],[0,2],[0,3]],
+      [[0,0],[1,0],[2,0],[3,0]]
+    ]
+  },
+  // O
+  {
+    color: '#f9c74f',
+    rotations: [
+      [[0,0],[0,1],[1,0],[1,1]],
+      [[0,0],[0,1],[1,0],[1,1]],
+      [[0,0],[0,1],[1,0],[1,1]],
+      [[0,0],[0,1],[1,0],[1,1]]
+    ]
+  },
+  // T
+  {
+    color: '#9b5de5',
+    rotations: [
+      [[0,0],[0,1],[0,2],[1,1]],
+      [[0,0],[1,0],[2,0],[1,1]],
+      [[1,0],[1,1],[1,2],[0,1]],
+      [[0,1],[1,1],[2,1],[1,0]]
+    ]
+  },
+  // S
+  {
+    color: '#57cc99',
+    rotations: [
+      [[0,1],[0,2],[1,0],[1,1]],
+      [[0,0],[1,0],[1,1],[2,1]],
+      [[0,1],[0,2],[1,0],[1,1]],
+      [[0,0],[1,0],[1,1],[2,1]]
+    ]
+  },
+  // Z
+  {
+    color: '#e94560',
+    rotations: [
+      [[0,0],[0,1],[1,1],[1,2]],
+      [[0,1],[1,0],[1,1],[2,0]],
+      [[0,0],[0,1],[1,1],[1,2]],
+      [[0,1],[1,0],[1,1],[2,0]]
+    ]
+  },
+  // J
+  {
+    color: '#f77f00',
+    rotations: [
+      [[0,0],[1,0],[1,1],[1,2]],
+      [[0,0],[0,1],[1,0],[2,0]],
+      [[0,0],[0,1],[0,2],[1,2]],
+      [[0,1],[1,1],[2,0],[2,1]]
+    ]
+  },
+  // L
+  {
+    color: '#4cc9f0',
+    rotations: [
+      [[0,2],[1,0],[1,1],[1,2]],
+      [[0,0],[1,0],[2,0],[2,1]],
+      [[0,0],[0,1],[0,2],[1,0]],
+      [[0,0],[0,1],[1,1],[2,1]]
+    ]
+  }
+];
+
+// ── Board constants ─────────────────────────────────────────────────
+const COLS = 10;
+const ROWS = 20;
+const CELL = 30; // px per cell
+
+// ── Canvas setup ───────────────────────────────────────────────────
+const boardCanvas = document.getElementById('board-canvas');
+const ctx         = boardCanvas.getContext('2d');
+const nextCanvas  = document.getElementById('next-canvas');
+const nctx        = nextCanvas.getContext('2d');
+
+// ── Game state ─────────────────────────────────────────────────────
+let board;        // ROWS × COLS array of cell objects {color, letter, bonus} or null
+let current;      // active piece
+let next;         // next piece
+let score;
+let level;
+let lines;
+let gameOver;
+let paused;
+let dropInterval; // ms between auto-drops
+let lastDrop;     // timestamp of last auto-drop
+let animId;
+
+let typedWord;    // current word being typed
+let wordHistory;  // [{word, pts}]
+
+// ── Initialise / reset ──────────────────────────────────────────────
+function initGame() {
+  board = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+  score = 0;
+  level = 1;
+  lines = 0;
+  gameOver = false;
+  paused = false;
+  typedWord = '';
+  wordHistory = [];
+  dropInterval = 800;
+  lastDrop = performance.now();
+
+  updateHUD();
+  updateWordDisplay();
+  document.getElementById('word-history').innerHTML = '';
+
+  next = spawnPiece();
+  spawnNext();
+
+  if (animId) cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// ── Piece helpers ───────────────────────────────────────────────────
+function spawnPiece() {
+  const idx = Math.floor(Math.random() * PIECES.length);
+  const def = PIECES[idx];
+  // Assign a random letter and bonus to each cell of the piece
+  const cells = def.rotations[0].map(() => ({
+    letter: randomLetter(),
+    bonus:  randomBonus()
+  }));
+  return {
+    def,
+    rot: 0,
+    row: 0,
+    col: Math.floor(COLS / 2) - 1,
+    cells  // per-block letter+bonus, indexed same as rotations[rot]
+  };
+}
+
+function spawnNext() {
+  current = next;
+  next = spawnPiece();
+  if (!canPlace(current, current.row, current.col, current.rot)) {
+    triggerGameOver();
+  }
+}
+
+function blocks(piece, rot) {
+  // Returns array of {r, c, letter, bonus, color}
+  const r = rot !== undefined ? rot : piece.rot;
+  return piece.def.rotations[r].map((offset, i) => ({
+    r: piece.row + offset[0],
+    c: piece.col + offset[1],
+    letter: piece.cells[i].letter,
+    bonus:  piece.cells[i].bonus,
+    color:  piece.def.color
+  }));
+}
+
+function canPlace(piece, row, col, rot) {
+  const r = rot !== undefined ? rot : piece.rot;
+  for (const [dr, dc] of piece.def.rotations[r]) {
+    const nr = row + dr;
+    const nc = col + dc;
+    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) return false;
+    if (board[nr][nc]) return false;
+  }
+  return true;
+}
+
+// ── Movement ────────────────────────────────────────────────────────
+function moveLeft()   { if (canPlace(current, current.row, current.col - 1, current.rot)) current.col--; }
+function moveRight()  { if (canPlace(current, current.row, current.col + 1, current.rot)) current.col++; }
+function softDrop()   {
+  if (canPlace(current, current.row + 1, current.col, current.rot)) {
+    current.row++;
+    score += 1;
+    updateHUD();
+  } else {
+    lockPiece();
+  }
+}
+
+function rotate() {
+  const newRot = (current.rot + 1) % 4;
+  // Wall-kick attempts: 0, -1, +1, -2, +2
+  for (const kick of [0, -1, 1, -2, 2]) {
+    if (canPlace(current, current.row, current.col + kick, newRot)) {
+      current.col += kick;
+      current.rot = newRot;
+      return;
+    }
+  }
+}
+
+function hardDrop() {
+  let dropped = 0;
+  while (canPlace(current, current.row + 1, current.col, current.rot)) {
+    current.row++;
+    dropped++;
+  }
+  score += dropped * 2;
+  updateHUD();
+  lockPiece();
+}
+
+// ── Lock piece onto board ───────────────────────────────────────────
+function lockPiece() {
+  for (const b of blocks(current)) {
+    if (b.r >= 0 && b.r < ROWS && b.c >= 0 && b.c < COLS) {
+      board[b.r][b.c] = { color: b.color, letter: b.letter, bonus: b.bonus };
+    }
+  }
+  clearFullRows();
+  spawnNext();
+}
+
+// ── Clear full rows (Tetris scoring) ───────────────────────────────
+function clearFullRows() {
+  let cleared = 0;
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r].every(cell => cell !== null)) {
+      board.splice(r, 1);
+      board.unshift(Array(COLS).fill(null));
+      cleared++;
+      r++; // re-check same index
+    }
+  }
+  if (cleared > 0) {
+    const pts = [0, 10, 30, 60, 100][Math.min(cleared, 4)] * level;
+    score += pts;
+    lines += cleared;
+    level = Math.floor(lines / 10) + 1;
+    dropInterval = Math.max(100, 800 - (level - 1) * 70);
+    updateHUD();
+    showFeedback(`+${pts} pts — ${cleared} line${cleared > 1 ? 's' : ''}!`, 'feedback-ok');
+  }
+}
+
+// ── Word scoring ────────────────────────────────────────────────────
+function scoreWord(word, matchedCells) {
+  // matchedCells: array of board cell objects {color, letter, bonus}
+  let letterSum = 0;
+  let wordMult  = 1;
+
+  for (const cell of matchedCells) {
+    let lv = LETTER_VALUES[cell.letter] || 1;
+    if (cell.bonus === BONUS.DL) lv *= 2;
+    if (cell.bonus === BONUS.TL) lv *= 3;
+    letterSum += lv;
+    if (cell.bonus === BONUS.DW) wordMult *= 2;
+    if (cell.bonus === BONUS.TW) wordMult *= 3;
+  }
+
+  let total = letterSum * wordMult;
+  if (word.length >= 7) total *= 2;
+  return total;
+}
+
+// ── Word submission ─────────────────────────────────────────────────
+function submitWord() {
+  const word = typedWord.toUpperCase();
+  typedWord = '';
+  updateWordDisplay();
+
+  if (word.length < 2) {
+    showFeedback('Too short!', 'feedback-bad');
+    return;
+  }
+
+  if (!DICTIONARY.has(word.toLowerCase())) {
+    showFeedback(`"${word}" not in dictionary`, 'feedback-bad');
+    return;
+  }
+
+  // Find the letters on the board (settled cells only)
+  // Strategy: find a contiguous path of cells spelling the word.
+  // We use a greedy left-to-right, top-to-bottom search for simplicity
+  // (matches any arrangement of the letters in board order).
+  const result = findWordOnBoard(word);
+  if (!result) {
+    showFeedback(`Letters for "${word}" not on board`, 'feedback-bad');
+    return;
+  }
+
+  const pts = scoreWord(word, result.map(([r,c]) => board[r][c]));
+
+  // Remove matched cells
+  for (const [r, c] of result) {
+    board[r][c] = null;
+  }
+
+  // Apply gravity: let floating cells fall
+  applyGravity();
+
+  score += pts;
+  lines += 0; // word play doesn't count as lines
+  updateHUD();
+
+  // Record history
+  wordHistory.unshift({ word, pts });
+  if (wordHistory.length > 20) wordHistory.pop();
+  renderHistory();
+
+  const bonusNote = word.length >= 7 ? ' (7+ bonus!)' : '';
+  showFeedback(`"${word}" +${pts} pts${bonusNote}`, 'feedback-ok');
+}
+
+// Find word on board: returns array of [r,c] positions or null
+// Uses DFS to find any path of adjacent (including diagonal) cells
+// spelling the word, similar to Boggle.
+function findWordOnBoard(word) {
+  const visited = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+
+  function dfs(idx, r, c, path) {
+    if (idx === word.length) return path;
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+    if (visited[r][c]) return null;
+    if (!board[r][c]) return null;
+    if (board[r][c].letter !== word[idx]) return null;
+
+    visited[r][c] = true;
+    path.push([r, c]);
+
+    // Try all 8 neighbours
+    const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+    for (const [dr, dc] of dirs) {
+      const res = dfs(idx + 1, r + dr, c + dc, path);
+      if (res) return res;
+    }
+
+    path.pop();
+    visited[r][c] = false;
+    return null;
+  }
+
+  // Try every cell as starting point
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c] && board[r][c].letter === word[0]) {
+        const res = dfs(0, r, c, []);
+        if (res) return res;
+      }
+    }
+  }
+  return null;
+}
+
+// Apply gravity after removing cells
+function applyGravity() {
+  // For each column, compact non-null cells to the bottom
+  for (let c = 0; c < COLS; c++) {
+    const col = [];
+    for (let r = 0; r < ROWS; r++) {
+      if (board[r][c] !== null) col.push(board[r][c]);
+    }
+    // Fill from bottom
+    for (let r = ROWS - 1; r >= 0; r--) {
+      board[r][c] = col.length > 0 ? col.pop() : null;
+    }
+  }
+}
+
+// ── HUD updates ─────────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('score-display').textContent = score.toLocaleString();
+  document.getElementById('level-display').textContent = level;
+  document.getElementById('lines-display').textContent = lines;
+}
+
+function updateWordDisplay() {
+  const el = document.getElementById('word-display');
+  el.textContent = typedWord.length > 0 ? typedWord.toUpperCase() : '_';
+}
+
+function showFeedback(msg, cls) {
+  const el = document.getElementById('word-feedback');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+function renderHistory() {
+  const el = document.getElementById('word-history');
+  el.innerHTML = wordHistory.map(e =>
+    `<div class="history-entry"><span class="hw">${e.word}</span><span class="hp">+${e.pts}</span></div>`
+  ).join('');
+}
+
+// ── Ghost piece ─────────────────────────────────────────────────────
+function ghostRow() {
+  let gr = current.row;
+  while (canPlace(current, gr + 1, current.col, current.rot)) gr++;
+  return gr;
+}
+
+// ── Drawing ─────────────────────────────────────────────────────────
+function drawCell(context, x, y, size, color, letter, bonus, alpha) {
+  context.save();
+  context.globalAlpha = alpha !== undefined ? alpha : 1;
+
+  // Determine fill color
+  const bonusColor = BONUS_COLORS[bonus];
+  const fillColor  = bonusColor || color;
+
+  // Main block
+  context.fillStyle = fillColor;
+  context.beginPath();
+  context.roundRect(x + 1, y + 1, size - 2, size - 2, 3);
+  context.fill();
+
+  // Highlight (top-left bevel)
+  context.fillStyle = 'rgba(255,255,255,0.25)';
+  context.beginPath();
+  context.roundRect(x + 1, y + 1, size - 2, 6, [3, 3, 0, 0]);
+  context.fill();
+
+  // Shadow (bottom-right bevel)
+  context.fillStyle = 'rgba(0,0,0,0.3)';
+  context.beginPath();
+  context.roundRect(x + 1, y + size - 7, size - 2, 6, [0, 0, 3, 3]);
+  context.fill();
+
+  // Bonus label (small tag in corner)
+  if (bonus && bonus !== BONUS.NONE) {
+    const tag = bonus.toUpperCase();
+    context.font = `bold ${Math.floor(size * 0.22)}px sans-serif`;
+    context.fillStyle = BONUS_TEXT_COLORS[bonus];
+    context.globalAlpha = (alpha !== undefined ? alpha : 1) * 0.85;
+    context.fillText(tag, x + 3, y + Math.floor(size * 0.28));
+  }
+
+  // Letter
+  if (letter) {
+    const textColor = bonusColor ? BONUS_TEXT_COLORS[bonus] : '#ffffff';
+    context.globalAlpha = alpha !== undefined ? alpha : 1;
+    context.font = `bold ${Math.floor(size * 0.52)}px 'Segoe UI', sans-serif`;
+    context.fillStyle = textColor;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(letter, x + size / 2, y + size / 2 + 1);
+
+    // Scrabble value subscript
+    const val = LETTER_VALUES[letter] || 1;
+    context.font = `${Math.floor(size * 0.22)}px sans-serif`;
+    context.fillStyle = textColor;
+    context.globalAlpha = (alpha !== undefined ? alpha : 1) * 0.75;
+    context.textAlign = 'right';
+    context.textBaseline = 'bottom';
+    context.fillText(val, x + size - 3, y + size - 2);
+  }
+
+  context.restore();
+}
+
+function drawBoard() {
+  // Background
+  ctx.fillStyle = '#0d1b2a';
+  ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let r = 0; r <= ROWS; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(COLS * CELL, r * CELL); ctx.stroke();
+  }
+  for (let c = 0; c <= COLS; c++) {
+    ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, ROWS * CELL); ctx.stroke();
+  }
+
+  // Settled cells
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = board[r][c];
+      if (cell) {
+        drawCell(ctx, c * CELL, r * CELL, CELL, cell.color, cell.letter, cell.bonus);
+      }
+    }
+  }
+
+  // Ghost piece
+  if (current && !gameOver) {
+    const gr = ghostRow();
+    for (const b of blocks(current)) {
+      const ghostR = gr + (b.r - current.row);
+      drawCell(ctx, b.c * CELL, ghostR * CELL, CELL, current.def.color, b.letter, b.bonus, 0.18);
+    }
+  }
+
+  // Active piece
+  if (current && !gameOver) {
+    for (const b of blocks(current)) {
+      if (b.r >= 0) {
+        drawCell(ctx, b.c * CELL, b.r * CELL, CELL, b.color, b.letter, b.bonus);
+      }
+    }
+  }
+
+  // Pause overlay
+  if (paused) {
+    ctx.fillStyle = 'rgba(10,10,20,0.7)';
+    ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+    ctx.fillStyle = '#e94560';
+    ctx.font = 'bold 36px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PAUSED', boardCanvas.width / 2, boardCanvas.height / 2);
+  }
+}
+
+function drawNext() {
+  nctx.fillStyle = '#0d1b2a';
+  nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+
+  if (!next) return;
+  const cellSize = 24;
+  const rot = next.def.rotations[0];
+  const minR = Math.min(...rot.map(o => o[0]));
+  const maxR = Math.max(...rot.map(o => o[0]));
+  const minC = Math.min(...rot.map(o => o[1]));
+  const maxC = Math.max(...rot.map(o => o[1]));
+  const pw = (maxC - minC + 1) * cellSize;
+  const ph = (maxR - minR + 1) * cellSize;
+  const ox = (nextCanvas.width  - pw) / 2;
+  const oy = (nextCanvas.height - ph) / 2;
+
+  rot.forEach((offset, i) => {
+    const x = ox + (offset[1] - minC) * cellSize;
+    const y = oy + (offset[0] - minR) * cellSize;
+    drawCell(nctx, x, y, cellSize, next.def.color, next.cells[i].letter, next.cells[i].bonus);
+  });
+}
+
+// ── Game loop ───────────────────────────────────────────────────────
+function gameLoop(ts) {
+  if (gameOver) return;
+
+  if (!paused) {
+    if (ts - lastDrop >= dropInterval) {
+      lastDrop = ts;
+      if (canPlace(current, current.row + 1, current.col, current.rot)) {
+        current.row++;
+      } else {
+        lockPiece();
+      }
+    }
+  } else {
+    lastDrop = ts; // don't accumulate time while paused
+  }
+
+  drawBoard();
+  drawNext();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// ── Game over ───────────────────────────────────────────────────────
+function triggerGameOver() {
+  gameOver = true;
+  cancelAnimationFrame(animId);
+  drawBoard();
+
+  document.getElementById('overlay-title').textContent = 'GAME OVER';
+  document.getElementById('overlay-msg').textContent   = 'Better luck next time!';
+  document.getElementById('final-score').style.display = 'block';
+  document.getElementById('final-score').textContent   = `Final Score: ${score.toLocaleString()}`;
+  document.getElementById('start-btn').textContent     = 'PLAY AGAIN';
+  document.getElementById('overlay').style.display     = 'flex';
+}
+
+// ── Keyboard handling ───────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Start screen
+  if (document.getElementById('overlay').style.display !== 'none') {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      startGame();
+    }
+    return;
+  }
+
+  if (gameOver) return;
+
+  // Pause toggle
+  if (e.key === 'p' || e.key === 'P') {
+    paused = !paused;
+    return;
+  }
+
+  if (paused) return;
+
+  // Tetris controls
+  switch (e.key) {
+    case 'ArrowLeft':  e.preventDefault(); moveLeft();  break;
+    case 'ArrowRight': e.preventDefault(); moveRight(); break;
+    case 'ArrowUp':    e.preventDefault(); rotate();    break;
+    case 'ArrowDown':  e.preventDefault(); softDrop();  break;
+    case ' ':
+      e.preventDefault();
+      // Only hard-drop if no word is being typed
+      if (typedWord.length === 0) {
+        hardDrop();
+      }
+      break;
+    case 'Enter':
+      e.preventDefault();
+      if (typedWord.length > 0) submitWord();
+      break;
+    case 'Backspace':
+      e.preventDefault();
+      typedWord = typedWord.slice(0, -1);
+      updateWordDisplay();
+      break;
+    case 'Escape':
+      typedWord = '';
+      updateWordDisplay();
+      showFeedback('Word cleared', 'feedback-info');
+      break;
+    default:
+      // Letter keys for word typing
+      if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+        typedWord += e.key.toUpperCase();
+        if (typedWord.length > 15) typedWord = typedWord.slice(0, 15);
+        updateWordDisplay();
+      }
+  }
+});
+
+// ── Start button ────────────────────────────────────────────────────
+function startGame() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('final-score').style.display = 'none';
+  document.getElementById('overlay-title').textContent = 'TETROGGLEABLE';
+  document.getElementById('start-btn').textContent = 'START GAME';
+  initGame();
+}
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+
+// ── Polyfill roundRect for older browsers ───────────────────────────
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    const [tl, tr, br, bl] = Array.isArray(r) ? [...r, ...r].slice(0,4) : [r,r,r,r];
+    this.beginPath();
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + tr);
+    this.lineTo(x + w, y + h - br);
+    this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+    this.lineTo(x + bl, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - bl);
+    this.lineTo(x, y + tl);
+    this.quadraticCurveTo(x, y, x + tl, y);
+    this.closePath();
+    return this;
+  };
+}
+</script>
+</body>
+</html>
