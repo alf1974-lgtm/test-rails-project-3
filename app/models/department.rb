@@ -1,0 +1,6 @@
+class Department < ApplicationRecord
+  validates :name, presence: true, uniqueness: true
+  validates :code, presence: true, uniqueness: true
+
+  has_many :courses, dependent: :destroy
+end
