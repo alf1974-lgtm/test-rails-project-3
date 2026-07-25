@@ -1,0 +1,199 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #eee;
+}
+
+/* ── Container ────────────────────────────────────────────── */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  width: min(420px, 95vw);
+}
+
+h1 {
+  font-size: 2.2rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #e94560;
+  text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+}
+
+/* ── Scoreboard ───────────────────────────────────────────── */
+.scoreboard {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.score-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid transparent;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.score-card.active-x {
+  border-color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.12);
+}
+
+.score-card.active-o {
+  border-color: #e94560;
+  background: rgba(233, 69, 96, 0.12);
+}
+
+.score-card.draws {
+  flex: 0.7;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.score-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* ── Status bar ───────────────────────────────────────────── */
+.status-bar {
+  font-size: 1.1rem;
+  min-height: 1.6em;
+  text-align: center;
+  transition: color 0.3s;
+}
+
+.status-bar strong {
+  font-size: 1.3rem;
+}
+
+.status-bar.turn-x strong { color: #4fc3f7; }
+.status-bar.turn-o strong { color: #e94560; }
+.status-bar.winner       { font-size: 1.3rem; font-weight: 700; }
+.status-bar.winner-x     { color: #4fc3f7; }
+.status-bar.winner-o     { color: #e94560; }
+.status-bar.draw         { color: #ffd54f; font-size: 1.3rem; font-weight: 700; }
+
+/* ── Board ────────────────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.cell {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 900;
+  cursor: pointer;
+  color: transparent;
+  transition: background 0.2s, transform 0.15s, border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cell:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+  transform: scale(1.04);
+}
+
+.cell:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Mark colours */
+.cell.x {
+  color: #4fc3f7;
+  border-color: rgba(79, 195, 247, 0.4);
+  cursor: default;
+}
+
+.cell.o {
+  color: #e94560;
+  border-color: rgba(233, 69, 96, 0.4);
+  cursor: default;
+}
+
+/* Winning cells glow */
+.cell.winning {
+  background: rgba(255, 255, 255, 0.15);
+  animation: pulse 0.8s ease-in-out infinite alternate;
+}
+
+.cell.winning.x { box-shadow: 0 0 18px rgba(79, 195, 247, 0.7); }
+.cell.winning.o { box-shadow: 0 0 18px rgba(233, 69, 96, 0.7); }
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.06); }
+}
+
+/* Pop-in animation when a mark is placed */
+@keyframes pop-in {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.cell.x, .cell.o {
+  animation: pop-in 0.25s ease-out forwards;
+}
+
+/* ── Reset button ─────────────────────────────────────────── */
+.btn-reset {
+  padding: 12px 36px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  background: #e94560;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+}
+
+.btn-reset:hover {
+  background: #c73652;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(233, 69, 96, 0.55);
+}
+
+.btn-reset:active {
+  transform: translateY(0);
+}
