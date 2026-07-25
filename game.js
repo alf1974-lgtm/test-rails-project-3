@@ -1,5 +1,5 @@
 /**
- * Tic Tac Toe – two players, same browser
+ * Meow-Meow – two players, same browser
  * Player 1 = X  |  Player 2 = O
  */
 
