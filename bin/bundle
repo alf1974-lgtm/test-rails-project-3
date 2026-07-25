@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+#
+# This file loads Bundler and runs the given command.
+#
+
+require "bundler/setup"
+load Gem.bin_path("bundler", "bundle")
