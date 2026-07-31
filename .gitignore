@@ -1,0 +1,27 @@
+# Ignore bundler config
+/.bundle
+
+# Ignore all logfiles and tempfiles
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Ignore pidfiles
+/tmp/pids/*
+!/tmp/pids/.keep
+
+# Ignore SQLite databases
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3.gz
+
+# Ignore master key for credentials
+/config/master.key
+/config/credentials.yml.enc
+
+# Ignore node_modules (just in case)
+/node_modules
+
+# macOS
+.DS_Store
